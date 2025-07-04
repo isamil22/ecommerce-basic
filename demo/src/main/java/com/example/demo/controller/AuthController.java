@@ -86,6 +86,8 @@ public class AuthController {
             user.setEmail(request.getEmail());
             user.setPassword(request.getPassword());
 
+            // The recaptchaToken is handled at this controller level and not passed to the service.
+
             User registeredUser = userService.registerUser(user);
             logger.info("Successfully processed registration for user: {}", registeredUser.getEmail());
             return ResponseEntity.ok(registeredUser);

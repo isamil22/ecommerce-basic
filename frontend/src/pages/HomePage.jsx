@@ -46,6 +46,19 @@ const HomePage = () => {
         fetchData();
     }, []);
 
+    // Helper function to render stars
+    const renderStars = (rating) => {
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            if (i <= rating) {
+                stars.push(<span key={i} className="text-yellow-400">&#9733;</span>); // Filled star
+            } else {
+                stars.push(<span key={i} className="text-gray-300">&#9733;</span>); // Empty star
+            }
+        }
+        return <div className="flex items-center">{stars}</div>;
+    };
+
     // Use the S3 URL directly
     const heroImageUrl = hero?.imageUrl;
 
@@ -121,10 +134,11 @@ const HomePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {reviews.map(review => (
                         <div key={review.id} className="bg-white p-6 rounded-lg shadow-md">
-                            <p className="text-gray-600">"{review.content}"</p>
-                            <div className="mt-4">
+                            <p className="text-gray-600 mb-4">"{review.content}"</p> {/* Added mb-4 for spacing */}
+                            <div className="mt-auto"> {/* Use mt-auto to push content to the bottom if the card height varies */}
                                 <p className="font-semibold text-pink-500">{review.userEmail}</p>
-                                <p className="text-sm text-gray-500">Rating: {review.rating}/5</p>
+                                {/* Display stars using the helper function */}
+                                {renderStars(review.rating)}
                             </div>
                         </div>
                     ))}
