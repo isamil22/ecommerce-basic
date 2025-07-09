@@ -1,6 +1,5 @@
 package com.example.demo.service;
 
-
 import com.example.demo.dto.PackRequestDTO;
 import com.example.demo.model.Pack;
 import com.example.demo.model.PackItem;
@@ -32,6 +31,9 @@ public class PackService {
         pack.setDescription(requestDTO.getDescription());
         pack.setPrice(requestDTO.getPrice());
 
+        // Save the pack first to generate an ID
+        Pack savedPack = packRepository.save(pack);
+
         List<PackItem> packItems = requestDTO.getItems().stream().map(itemDTO -> {
             PackItem packItem = new PackItem();
 
@@ -46,13 +48,13 @@ public class PackService {
                 packItem.setVariationProducts(variations);
             }
 
-            packItem.setPack(pack); // Link back to the parent pack
+            packItem.setPack(savedPack); // Link back to the parent pack
             return packItem;
         }).collect(Collectors.toList());
 
-        pack.setItems(packItems);
+        savedPack.setItems(packItems);
 
-        return packRepository.save(pack);
+        return packRepository.save(savedPack);
     }
 
     public List<Pack> getAllPacks() {

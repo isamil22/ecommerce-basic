@@ -1,7 +1,6 @@
 package com.example.demo.model;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore; // <-- IMPORT THIS
+import com.fasterxml.jackson.annotation.JsonBackReference; // <-- IMPORT THIS
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +22,7 @@ public class PackItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore // <-- ADD THIS ANNOTATION
+    @JsonBackReference // <-- REPLACE @JsonIgnore WITH THIS
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pack_id")
     private Pack pack;

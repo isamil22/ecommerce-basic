@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference; // <-- IMPORT THIS
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class Pack {
     private String description;
     private double price;
 
+    @JsonManagedReference // <-- ADD THIS ANNOTATION
     @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PackItem> items = new ArrayList<>();
 }

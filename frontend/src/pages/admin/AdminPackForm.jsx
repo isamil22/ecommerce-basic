@@ -20,9 +20,11 @@ const AdminPackForm = () => {
             setLoading(true);
             try {
                 const response = await getAllProducts();
-                setProducts(response.data.content || response.data);
+                const productsArray = Array.isArray(response.data) ? response.data : response.data.content;
+                setProducts(productsArray || []);
             } catch (err) {
                 setError('Failed to fetch products.');
+                console.error("Fetch Products Error:", err);
             } finally {
                 setLoading(false);
             }
@@ -38,10 +40,19 @@ const AdminPackForm = () => {
         }));
     };
 
-    const handleProductSelection = (e, index) => {
-        const { name, value } = e.target;
+    const handleItemChange = (index, field, value) => {
         const newItems = [...pack.items];
-        newItems[index][name] = value;
+        newItems[index][field] = value;
+        setPack(prev => ({ ...prev, items: newItems }));
+    };
+
+    const handleVariationChange = (itemIndex, productId) => {
+        const newItems = [...pack.items];
+        const currentVariations = newItems[itemIndex].variationProductIds || [];
+        const newVariations = currentVariations.includes(productId)
+            ? currentVariations.filter(id => id !== productId)
+            : [...currentVariations, productId];
+        newItems[itemIndex].variationProductIds = newVariations;
         setPack(prev => ({ ...prev, items: newItems }));
     };
 
@@ -60,10 +71,10 @@ const AdminPackForm = () => {
         const packRequestDTO = {
             name: pack.name,
             description: pack.description,
-            price: pack.price,
+            price: parseFloat(pack.price),
             items: pack.items.map(item => ({
                 defaultProductId: item.defaultProductId,
-                variationProductIds: item.variationProductIds
+                variationProductIds: item.variationProductIds || []
             }))
         };
 
@@ -71,7 +82,8 @@ const AdminPackForm = () => {
             await createPack(packRequestDTO);
             navigate('/admin/packs');
         } catch (err) {
-            setError(err.response?.data?.message || 'An error occurred during submission.');
+            console.error('Failed to create pack:', err.response?.data || err.message);
+            setError(err.response?.data?.message || 'An error occurred. Check the console for details.');
         } finally {
             setLoading(false);
         }
@@ -103,17 +115,34 @@ const AdminPackForm = () => {
 
                 <h2 className="text-2xl font-bold">Pack Items</h2>
                 {pack.items.map((item, index) => (
-                    <div key={index} className="border p-4 rounded-md">
-                        <label htmlFor={`defaultProduct-${index}`} className="block text-sm font-medium text-gray-700">Default Product</label>
-                        <select id={`defaultProduct-${index}`} name="defaultProductId" onChange={(e) => handleProductSelection(e, index)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
-                            <option value="">-- Select a Default Product --</option>
-                            {products.map(product => (
-                                <option key={product.id} value={product.id}>{product.name}</option>
-                            ))}
-                        </select>
+                    <div key={index} className="border p-4 rounded-md space-y-4">
+                        <div>
+                            <label htmlFor={`defaultProduct-${index}`} className="block text-sm font-medium text-gray-700">Default Product</label>
+                            <select id={`defaultProduct-${index}`} value={item.defaultProductId} onChange={(e) => handleItemChange(index, 'defaultProductId', e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
+                                <option value="">-- Select a Default Product --</option>
+                                {products.map(product => (
+                                    <option key={product.id} value={product.id}>{product.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Variation Products</label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                                {products.map(product => (
+                                    <div key={product.id} className="flex items-center">
+                                        <input type="checkbox" id={`variation-${index}-${product.id}`}
+                                               checked={(item.variationProductIds || []).includes(product.id)}
+                                               onChange={() => handleVariationChange(index, product.id)}
+                                               className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                                        />
+                                        <label htmlFor={`variation-${index}-${product.id}`} className="ml-2 block text-sm text-gray-900">{product.name}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 ))}
-                <button type="button" onClick={addProductToPack} className="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Add Product</button>
+                <button type="button" onClick={addProductToPack} className="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Add Another Product</button>
 
                 <hr />
 

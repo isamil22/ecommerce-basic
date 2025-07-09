@@ -12,9 +12,18 @@ const AdminPacksPage = () => {
         const fetchPacks = async () => {
             try {
                 const response = await getAllPacks();
-                setPacks(response.data);
+                // This logic correctly handles the array format you're receiving.
+                const packsArray = Array.isArray(response.data) ? response.data : response.data.content;
+
+                if (Array.isArray(packsArray)) {
+                    setPacks(packsArray);
+                } else {
+                    setError('Received invalid data from server.');
+                }
+
             } catch (err) {
                 setError('Failed to fetch packs.');
+                console.error("Fetch Packs Error:", err);
             } finally {
                 setLoading(false);
             }
@@ -39,13 +48,15 @@ const AdminPacksPage = () => {
                     Add New Pack
                 </Link>
             </div>
-            {packs.length > 0 ? (
+            {packs && packs.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {packs.map((pack) => (
                         <div key={pack.id} className="bg-white p-6 rounded-lg shadow-md">
                             <h2 className="text-2xl font-semibold">{pack.name}</h2>
                             <p className="text-gray-600">{pack.description}</p>
-                            <p className="text-lg font-bold text-pink-500">${pack.price.toFixed(2)}</p>
+                            <p className="text-lg font-bold text-pink-500">
+                                {pack.price != null ? `$${pack.price.toFixed(2)}` : 'Price not available'}
+                            </p>
                         </div>
                     ))}
                 </div>
