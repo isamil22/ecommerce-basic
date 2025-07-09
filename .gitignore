@@ -1,0 +1,14 @@
+# Ignore environment variables file
+.env
+
+# Ignore Node.js dependencies
+/frontend/node_modules
+
+# Ignore build output
+/frontend/dist
+/frontend/build
+
+# Ignore IDE and OS files
+.idea/
+.vscode/
+*.DS_Store
