@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference; // <-- IMPORT THIS
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class Comment {
     private String content;
     private Integer score;
 
+    @JsonBackReference // <-- ADD THIS ANNOTATION
     @ManyToOne
     @JoinColumn(name="product_id", nullable = false)
     private Product product;
@@ -23,5 +25,4 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name="user_id", nullable = false)
     private User user;
-
 }

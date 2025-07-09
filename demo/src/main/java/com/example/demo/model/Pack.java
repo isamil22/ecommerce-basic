@@ -26,7 +26,7 @@ public class Pack {
     private String description;
     private double price;
 
-    @JsonManagedReference // <-- ADD THIS ANNOTATION
+    @JsonManagedReference // <-- ADD THIS
     @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PackItem> items = new ArrayList<>();
 }

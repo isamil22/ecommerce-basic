@@ -22,7 +22,7 @@ public class PackItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonBackReference // <-- REPLACE @JsonIgnore WITH THIS
+    @JsonBackReference // <-- ADD THIS
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pack_id")
     private Pack pack;
