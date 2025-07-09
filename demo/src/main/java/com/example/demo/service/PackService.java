@@ -1,6 +1,9 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.PackItemResponseDTO;
 import com.example.demo.dto.PackRequestDTO;
+import com.example.demo.dto.PackResponseDTO;
+import com.example.demo.dto.ProductDTO;
 import com.example.demo.model.Pack;
 import com.example.demo.model.PackItem;
 import com.example.demo.model.Product;
@@ -31,24 +34,21 @@ public class PackService {
         pack.setDescription(requestDTO.getDescription());
         pack.setPrice(requestDTO.getPrice());
 
-        // Save the pack first to generate an ID
         Pack savedPack = packRepository.save(pack);
 
         List<PackItem> packItems = requestDTO.getItems().stream().map(itemDTO -> {
             PackItem packItem = new PackItem();
 
-            // Set the default product
             Product defaultProduct = productRepository.findById(itemDTO.getDefaultProductId())
                     .orElseThrow(() -> new EntityNotFoundException("Default Product not found with id: " + itemDTO.getDefaultProductId()));
             packItem.setDefaultProduct(defaultProduct);
 
-            // Set the variation products
             if (itemDTO.getVariationProductIds() != null && !itemDTO.getVariationProductIds().isEmpty()) {
                 List<Product> variations = productRepository.findAllById(itemDTO.getVariationProductIds());
                 packItem.setVariationProducts(variations);
             }
 
-            packItem.setPack(savedPack); // Link back to the parent pack
+            packItem.setPack(savedPack);
             return packItem;
         }).collect(Collectors.toList());
 
@@ -57,12 +57,47 @@ public class PackService {
         return packRepository.save(savedPack);
     }
 
-    public List<Pack> getAllPacks() {
-        return packRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<PackResponseDTO> getAllPacks() {
+        return packRepository.findAll().stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Pack getPackById(Long id) {
-        return packRepository.findById(id)
+    @Transactional(readOnly = true)
+    public PackResponseDTO getPackById(Long id) {
+        Pack pack = packRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Pack not found with id: " + id));
+        return convertToResponseDTO(pack);
+    }
+
+    private PackResponseDTO convertToResponseDTO(Pack pack) {
+        PackResponseDTO dto = new PackResponseDTO();
+        dto.setId(pack.getId());
+        dto.setName(pack.getName());
+        dto.setDescription(pack.getDescription());
+        dto.setPrice(pack.getPrice());
+        dto.setItems(pack.getItems().stream()
+                .map(this::convertItemToResponseDTO)
+                .collect(Collectors.toList()));
+        return dto;
+    }
+
+    private PackItemResponseDTO convertItemToResponseDTO(PackItem item) {
+        PackItemResponseDTO dto = new PackItemResponseDTO();
+        dto.setId(item.getId());
+        dto.setDefaultProduct(convertProductToDTO(item.getDefaultProduct()));
+        dto.setVariationProducts(item.getVariationProducts().stream()
+                .map(this::convertProductToDTO)
+                .collect(Collectors.toList()));
+        return dto;
+    }
+
+    private ProductDTO convertProductToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setPrice(product.getPrice());
+        return dto;
     }
 }

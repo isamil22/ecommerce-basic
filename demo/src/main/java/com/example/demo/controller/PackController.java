@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 
 import com.example.demo.dto.PackRequestDTO;
+import com.example.demo.dto.PackResponseDTO;
 import com.example.demo.model.Pack;
 import com.example.demo.service.PackService;
 import org.springframework.http.HttpStatus;
@@ -21,11 +22,6 @@ public class PackController {
         this.packService = packService;
     }
 
-    /**
-     * Endpoint for admins to create a new product pack.
-     * Example: Create a "Summer Glow Kit" containing a default sunscreen
-     * and a default lip balm, with other products as possible variations.
-     */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Pack> createPack(@RequestBody PackRequestDTO requestDTO) {
@@ -33,22 +29,15 @@ public class PackController {
         return new ResponseEntity<>(createdPack, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint to get all available packs.
-     * This can be used to display packs on the main shop page.
-     */
     @GetMapping
-    public ResponseEntity<List<Pack>> getAllPacks() {
-        List<Pack> packs = packService.getAllPacks();
+    public ResponseEntity<List<PackResponseDTO>> getAllPacks() {
+        List<PackResponseDTO> packs = packService.getAllPacks();
         return ResponseEntity.ok(packs);
     }
 
-    /**
-     * Endpoint to get a single pack by its ID, including all its items.
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<Pack> getPackById(@PathVariable Long id) {
-        Pack pack = packService.getPackById(id);
+    public ResponseEntity<PackResponseDTO> getPackById(@PathVariable Long id) {
+        PackResponseDTO pack = packService.getPackById(id);
         return ResponseEntity.ok(pack);
     }
 }

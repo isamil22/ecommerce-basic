@@ -1,6 +1,6 @@
 package com.example.demo.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference; // <-- IMPORT THIS
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,16 +22,16 @@ public class PackItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonBackReference // <-- ADD THIS
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pack_id")
     private Pack pack;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // CORRECTED
     @JoinColumn(name = "default_product_id", nullable = false)
     private Product defaultProduct;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY) // CORRECTED
     @JoinTable(
             name = "pack_item_variations",
             joinColumns = @JoinColumn(name = "pack_item_id"),
