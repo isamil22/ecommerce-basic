@@ -22,16 +22,15 @@ import { getCart, getUserProfile } from './api/apiService.js';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import EmailConfirmationPage from './pages/EmailConfirmationPage.jsx';
-
 import ContactPage from './pages/ContactPage.jsx';
 import FaqPage from './pages/FaqPage.jsx';
 import ShippingPage from './pages/ShippingPage.jsx';
-
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage.jsx';
 import AdminCategoryForm from './pages/admin/AdminCategoryForm.jsx';
 import AdminHeroPage from './pages/admin/AdminHeroPage.jsx';
 import AdminPackForm from './pages/admin/AdminPackForm.jsx';
 import AdminPacksPage from './pages/admin/AdminPacksPage.jsx';
+import PacksPage from "./pages/PacksPage.jsx"; // <<< THIS IS THE MISSING LINE
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,6 +90,7 @@ function App() {
                         {/* --- Public Routes --- */}
                         <Route path="/" element={<HomePage />} />
                         <Route path="/products" element={<ProductsPage />} />
+                        <Route path="/packs" element={<PacksPage />} />
                         <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} />} />
                         <Route path="/hello" element={<HelloPage />} />
                         <Route

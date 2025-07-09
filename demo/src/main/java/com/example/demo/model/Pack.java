@@ -27,6 +27,6 @@ public class Pack {
     private double price;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY) // CORRECTED
+    @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER) // CORRECTED: Was LAZY
     private List<PackItem> items = new ArrayList<>();
 }
