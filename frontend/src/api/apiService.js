@@ -203,3 +203,13 @@ export const uploadDescriptionImage = (formData) => {
         },
     });
 };
+
+
+
+export const createPack = (packData) => {
+    return apiService.post('/packs', packData);
+};
+
+export const getAllPacks = () => {
+    return apiService.get('/packs');
+};

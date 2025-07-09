@@ -30,6 +30,8 @@ import ShippingPage from './pages/ShippingPage.jsx';
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage.jsx';
 import AdminCategoryForm from './pages/admin/AdminCategoryForm.jsx';
 import AdminHeroPage from './pages/admin/AdminHeroPage.jsx';
+import AdminPackForm from './pages/admin/AdminPackForm.jsx';
+import AdminPacksPage from './pages/admin/AdminPacksPage.jsx';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -120,6 +122,8 @@ function App() {
                             <Route path="categories" element={<AdminCategoriesPage />} />
                             <Route path="categories/new" element={<AdminCategoryForm />} />
                             <Route path="categories/edit/:id" element={<AdminCategoryForm />} />
+                            <Route path="packs" element={<AdminPacksPage />} />
+                            <Route path="packs/new" element={<AdminPackForm />} />
                         </Route>
                     </Routes>
                 </main>

@@ -21,6 +21,9 @@ const AdminSidebar = () => {
                 <NavLink to="/admin/categories" className={({ isActive }) => `block py-2.5 px-4 rounded transition duration-200 ${isActive ? activeLinkClass : inactiveLinkClass}`}>
                     Categories
                 </NavLink>
+                <NavLink to="/admin/packs" className={({ isActive }) => `block py-2.5 px-4 rounded transition duration-200 ${isActive ? activeLinkClass : inactiveLinkClass}`}>
+                    Packs
+                </NavLink>
                 <NavLink to="/admin/orders" className={({ isActive }) => `block py-2.5 px-4 rounded transition duration-200 ${isActive ? activeLinkClass : inactiveLinkClass}`}>
                     Orders
                 </NavLink>
