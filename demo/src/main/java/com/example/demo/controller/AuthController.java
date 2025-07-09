@@ -43,10 +43,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest){
         // Validate the reCAPTCHA token first
-        if (!recaptchaService.validateRecaptcha(loginRequest.getRecaptchaToken())) {
-            logger.warn("reCAPTCHA validation failed for login attempt with email: {}", loginRequest.getEmail());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("reCAPTCHA validation failed.");
-        }
+//        if (!recaptchaService.validateRecaptcha(loginRequest.getRecaptchaToken())) {
+//            logger.warn("reCAPTCHA validation failed for login attempt with email: {}", loginRequest.getEmail());
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("reCAPTCHA validation failed.");
+//        }
 
         try {
             authenticationManager.authenticate(

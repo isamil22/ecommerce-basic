@@ -1,5 +1,7 @@
 package com.example.demo.model;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnore; // <-- IMPORT THIS
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +23,7 @@ public class PackItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore // <-- ADD THIS ANNOTATION
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pack_id")
     private Pack pack;
