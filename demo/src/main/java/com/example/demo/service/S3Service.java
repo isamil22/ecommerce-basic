@@ -19,7 +19,7 @@ public class S3Service {
     @Autowired
     private AmazonS3 s3client;
 
-    @Value("${aws.s3.bucket}")
+    @Value("${aws.s3.bucketName}")
     private String bucketName;
 
     public String saveImage(MultipartFile file) throws IOException {
