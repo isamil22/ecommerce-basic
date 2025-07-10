@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getPackById, addToCart } from '../api/apiService';
+import { useParams } from 'react-router-dom';
+import { getPackById, addToCart, updateDefaultProductForPack } from '../api/apiService';
 import Loader from '../components/Loader';
 
-// ProductOption component remains the same
+// Sub-component for rendering a single selectable product.
 const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChange, isDefault }) => {
     const imageUrl = (product.images && product.images.length > 0)
         ? product.images[0]
@@ -12,7 +12,7 @@ const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChan
     const isSelected = selectedProductId === product.id;
 
     const containerClasses = `
-        flex items-center p-3 rounded-lg border cursor-pointer transition-all duration-200 
+        flex items-center p-3 rounded-lg border cursor-pointer transition-all duration-200
         ${isSelected ? 'bg-pink-50 border-pink-500 ring-2 ring-pink-300' : 'border-gray-300 hover:bg-gray-50 hover:border-gray-400'}
     `;
 
@@ -21,10 +21,10 @@ const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChan
             <img src={imageUrl} alt={product.name} className="w-16 h-16 object-cover rounded-md mr-4" />
             <div className="flex-grow">
                 <div className="flex items-center mb-1">
-                    <span className="text-gray-800 font-medium">{product.name}</span>
+                    <span className="text-gray-800 font-medium">{product.name || 'Unnamed Product'}</span>
                     {isDefault && <span className="ml-2 bg-gray-200 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">Default</span>}
                 </div>
-                <span className="text-gray-600 block text-sm">${product.price.toFixed(2)}</span>
+                <span className="text-gray-600 block text-sm">${(product.price || 0).toFixed(2)}</span>
             </div>
             <input
                 type="radio"
@@ -38,27 +38,27 @@ const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChan
     );
 };
 
-// This component now has the looping animation applied
+// Sub-component for a group of product choices.
 const PackItemSelector = ({ item, selectedProductId, onSelectionChange }) => (
     <div className="border border-gray-200 p-4 rounded-lg mb-4 bg-white shadow-lg overflow-hidden">
         <h4 className="font-bold text-lg mb-4 text-gray-800 border-b border-gray-200 pb-3">
-            Slot: <span className="text-pink-600 font-extrabold">{item.defaultProduct.name}</span>
+            Slot: <span className="text-pink-600 font-extrabold">{item.defaultProduct ? item.defaultProduct.name : 'Item'}</span>
         </h4>
 
-        <div>
-            <h5 className="font-semibold text-md text-gray-600 mb-2">✅ Included by default:</h5>
-            <ProductOption
-                product={item.defaultProduct}
-                packItemId={item.id}
-                selectedProductId={selectedProductId}
-                onSelectionChange={onSelectionChange}
-                isDefault={true}
-            />
-        </div>
+        {item.defaultProduct && (
+            <div>
+                <h5 className="font-semibold text-md text-gray-600 mb-2">✅ Included by default:</h5>
+                <ProductOption
+                    product={item.defaultProduct}
+                    packItemId={item.id}
+                    selectedProductId={selectedProductId}
+                    onSelectionChange={onSelectionChange}
+                    isDefault={true}
+                />
+            </div>
+        )}
 
-        {item.variationProducts.length > 0 && (
-            // MODIFICATION: The 'animate-nudge' class now applies the infinite loop.
-            // The inline style for animationDelay has been removed.
+        {item.variationProducts && item.variationProducts.length > 0 && (
             <div className="mt-4 pt-4 border-t-2 border-dashed border-gray-200 animate-nudge">
                 <h5 className="font-semibold text-md text-gray-600 mb-3 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,12 +98,17 @@ const PackDetailPage = () => {
                 const response = await getPackById(id);
                 setPack(response.data);
                 const initialSelections = {};
-                response.data.items.forEach(item => {
-                    initialSelections[item.id] = item.defaultProduct.id;
-                });
+                if (response.data && response.data.items) {
+                    response.data.items.forEach(item => {
+                        if (item && item.defaultProduct) {
+                            initialSelections[item.id] = item.defaultProduct.id;
+                        }
+                    });
+                }
                 setSelections(initialSelections);
             } catch (err) {
-                setError('Failed to fetch pack details.');
+                setError('Failed to fetch pack details. It might not exist.');
+                console.error(err);
             } finally {
                 setLoading(false);
             }
@@ -111,11 +116,22 @@ const PackDetailPage = () => {
         fetchPack();
     }, [id]);
 
-    const handleSelectionChange = (packItemId, selectedProductId) => {
-        setSelections(prev => ({
-            ...prev,
-            [packItemId]: selectedProductId
-        }));
+    const handleSelectionChange = async (packItemId, selectedProductId) => {
+        setError('');
+        setMessage('');
+        const currentPackId = pack.id;
+        const previousSelections = { ...selections };
+        const newSelections = { ...selections, [packItemId]: selectedProductId };
+
+        setSelections(newSelections);
+
+        try {
+            const response = await updateDefaultProductForPack(currentPackId, packItemId, selectedProductId);
+            setPack(response.data);
+        } catch (err) {
+            setError('Failed to update pack. Please try again.');
+            setSelections(previousSelections);
+        }
     };
 
     const handleAddToCart = async () => {
@@ -131,56 +147,59 @@ const PackDetailPage = () => {
     };
 
     if (loading) return <Loader />;
-    if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
-    if (!pack) return <p className="text-center mt-10">Pack not found.</p>;
 
-    const mainImageUrl = pack.imageUrl || 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack';
-
+    // Main render logic
     return (
         <div className="container mx-auto px-4 py-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-lg shadow-xl">
-                        <img
-                            src={mainImageUrl}
-                            alt={pack.name}
-                            className="w-full h-auto object-cover rounded-lg mb-6"
-                        />
-                        <h1 className="text-4xl font-extrabold text-gray-800">{pack.name}</h1>
-                        <p className="text-3xl text-pink-500 font-bold my-3">
-                            ${pack.price.toFixed(2)}
-                        </p>
-                        <p className="text-gray-600 leading-relaxed">{pack.description}</p>
-                    </div>
-                </div>
+            {error && <p className="bg-red-100 text-red-700 p-3 rounded-md mb-4">{error}</p>}
+            {message && <p className="bg-green-100 text-green-700 p-3 rounded-md mb-4">{message}</p>}
 
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                        Customize Your Pack
-                    </h2>
-                    {message && <p className="bg-green-100 text-green-700 p-3 rounded-md mb-4">{message}</p>}
-                    {error && <p className="bg-red-100 text-red-700 p-3 rounded-md mb-4">{error}</p>}
+            {!pack && !loading && <p className="text-center mt-10">Pack not found.</p>}
 
-                    <div className="space-y-4">
-                        {pack.items.map(item => (
-                            <PackItemSelector
-                                key={item.id}
-                                item={item}
-                                selectedProductId={selections[item.id]}
-                                onSelectionChange={handleSelectionChange}
+            {pack && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    {/* Left Side: Pack Info & Image */}
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-lg shadow-xl">
+                            <img
+                                src={pack.imageUrl || 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
+                                alt={pack.name}
+                                className="w-full h-auto object-cover rounded-lg mb-6"
                             />
-                        ))}
+                            <h1 className="text-4xl font-extrabold text-gray-800">{pack.name}</h1>
+                            <p className="text-3xl text-pink-500 font-bold my-3">
+                                ${(pack.price || 0).toFixed(2)}
+                            </p>
+                            <p className="text-gray-600 leading-relaxed">{pack.description}</p>
+                        </div>
                     </div>
-                    <div className="mt-8">
-                        <button
-                            onClick={handleAddToCart}
-                            className="w-full bg-pink-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-pink-700 transition duration-300"
-                        >
-                            Add Selections to Cart
-                        </button>
+
+                    {/* Right Side: Customization Options */}
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                            Customize Your Pack
+                        </h2>
+                        <div className="space-y-4">
+                            {pack.items && pack.items.map(item => (
+                                <PackItemSelector
+                                    key={item.id}
+                                    item={item}
+                                    selectedProductId={selections[item.id]}
+                                    onSelectionChange={handleSelectionChange}
+                                />
+                            ))}
+                        </div>
+                        <div className="mt-8">
+                            <button
+                                onClick={handleAddToCart}
+                                className="w-full bg-pink-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-pink-700 transition duration-300"
+                            >
+                                Add Selections to Cart
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

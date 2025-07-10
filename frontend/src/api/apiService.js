@@ -194,10 +194,6 @@ export const uploadDescriptionImage = (formData) => {
     });
 };
 
-/**
- * UPDATED: This function now sends a FormData object.
- * This is required for multipart requests (i.e., requests with files).
- */
 export const createPack = (formData) => apiService.post('/packs', formData);
 
 
@@ -207,4 +203,11 @@ export const getAllPacks = () => {
 
 export const getPackById = (id) => {
     return apiService.get(`/packs/${id}`);
+};
+
+/**
+ * NEW: Updates the default product for a specific item in a pack.
+ */
+export const updateDefaultProductForPack = (packId, itemId, productId) => {
+    return apiService.put(`/packs/${packId}/items/${itemId}/default-product`, { productId });
 };
