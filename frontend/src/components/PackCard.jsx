@@ -13,8 +13,12 @@ const PackCard = ({ pack }) => {
                 <div className="mt-4">
                     <h4 className="font-semibold">Items in this pack:</h4>
                     <ul className="list-disc list-inside">
-                        {pack.items.map(item => (
-                            <li key={item.id}>{item.defaultProduct.name}</li>
+                        {/* Check if pack.items is an array before mapping it */}
+                        {Array.isArray(pack.items) && pack.items.map(item => (
+                            // Also ensure item and defaultProduct exist to prevent further errors
+                            item && item.defaultProduct ? (
+                                <li key={item.id}>{item.defaultProduct.name}</li>
+                            ) : null
                         ))}
                     </ul>
                 </div>
@@ -24,3 +28,4 @@ const PackCard = ({ pack }) => {
 };
 
 export default PackCard;
+
