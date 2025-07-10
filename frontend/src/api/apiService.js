@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiService = axios.create({
-    baseURL: '/api', // Correct: Use the relative path for the proxy
+    baseURL: '/api', // Use the relative path for the proxy
 });
 
 apiService.interceptors.request.use(config => {
@@ -35,11 +35,9 @@ export const loginUser = (credentials) => {
     return apiService.post('/auth/login', credentials);
 };
 
-// --- NEW EMAIL CONFIRMATION FUNCTION ---
 export const confirmEmail = (confirmationData) => {
     return apiService.post('/auth/confirm-email', confirmationData);
 };
-// -----------------------------------------
 
 export const logoutUser = () => {
     localStorage.removeItem('token');
@@ -61,22 +59,18 @@ export const addToCart = (productId, quantity) => {
     return apiService.post(`/cart/add?productId=${productId}&quantity=${quantity}`);
 };
 
-
 export const createOrder = (orderData) => {
     return apiService.post(`/orders?address=${orderData.address}&phoneNumber=${orderData.phoneNumber}`);
 };
 
-// --- New Function for User Orders ---
 export const getUserOrders = () => {
     return apiService.get('/orders/user');
 };
-// fwefgwergfwreg
-// --- New function for Bestsellers ---
+
 export const getBestsellers = () => {
     return apiService.get('/products/bestsellers');
 };
 
-// --- New function for New Arrivals ---
 export const getNewArrivals = () => {
     return apiService.get('/products/new-arrivals');
 };
@@ -123,7 +117,6 @@ export const deleteCategory = (id) => {
     return apiService.delete(`/categories/${id}`);
 };
 
-
 export const getAllOrders = () => {
     return apiService.get('/orders');
 };
@@ -131,7 +124,6 @@ export const getAllOrders = () => {
 export const updateOrderStatus = (orderId, status) => {
     return apiService.put(`/orders/${orderId}/status?status=${status}`);
 };
-
 
 // --- USER MANAGEMENT ADMIN FUNCTIONS ---
 export const getAllUsers = () => {
@@ -168,8 +160,6 @@ export const deleteReview = (reviewId) => {
     return apiService.delete(`/reviews/${reviewId}`);
 };
 
-
-
 // --- Hero Section API Functions ---
 export const getHero = () => {
     return apiService.get('/hero');
@@ -204,11 +194,12 @@ export const uploadDescriptionImage = (formData) => {
     });
 };
 
+/**
+ * UPDATED: This function now sends a FormData object.
+ * This is required for multipart requests (i.e., requests with files).
+ */
+export const createPack = (formData) => apiService.post('/packs', formData);
 
-
-export const createPack = (packData) => {
-    return apiService.post('/packs', packData);
-};
 
 export const getAllPacks = () => {
     return apiService.get('/packs');

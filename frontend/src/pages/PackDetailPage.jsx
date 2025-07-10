@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getPackById, addToCart } from '../api/apiService';
 import Loader from '../components/Loader';
 
-// This component remains the same from the previous enhancement
+// ProductOption component remains the same
 const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChange, isDefault }) => {
     const imageUrl = (product.images && product.images.length > 0)
         ? product.images[0]
@@ -38,15 +38,13 @@ const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChan
     );
 };
 
-// FINAL ENHANCEMENT: This component is now visually separated for maximum clarity.
+// This component now has the looping animation applied
 const PackItemSelector = ({ item, selectedProductId, onSelectionChange }) => (
-    <div className="border border-gray-200 p-4 rounded-lg mb-4 bg-white shadow-lg">
-        {/* Main title for this product slot */}
+    <div className="border border-gray-200 p-4 rounded-lg mb-4 bg-white shadow-lg overflow-hidden">
         <h4 className="font-bold text-lg mb-4 text-gray-800 border-b border-gray-200 pb-3">
             Slot: <span className="text-pink-600 font-extrabold">{item.defaultProduct.name}</span>
         </h4>
 
-        {/* Part 1: The Default Item, clearly marked as included */}
         <div>
             <h5 className="font-semibold text-md text-gray-600 mb-2">✅ Included by default:</h5>
             <ProductOption
@@ -58,9 +56,10 @@ const PackItemSelector = ({ item, selectedProductId, onSelectionChange }) => (
             />
         </div>
 
-        {/* Part 2: The swappable variants, with a clear separator and call to action */}
         {item.variationProducts.length > 0 && (
-            <div className="mt-4 pt-4 border-t-2 border-dashed border-gray-200">
+            // MODIFICATION: The 'animate-nudge' class now applies the infinite loop.
+            // The inline style for animationDelay has been removed.
+            <div className="mt-4 pt-4 border-t-2 border-dashed border-gray-200 animate-nudge">
                 <h5 className="font-semibold text-md text-gray-600 mb-3 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />

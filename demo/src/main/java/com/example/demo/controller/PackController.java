@@ -1,31 +1,31 @@
 package com.example.demo.controller;
 
-
 import com.example.demo.dto.PackRequestDTO;
 import com.example.demo.dto.PackResponseDTO;
-import com.example.demo.model.Pack;
 import com.example.demo.service.PackService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/packs")
+@CrossOrigin(origins = "*")
 public class PackController {
 
-    private final PackService packService;
+    @Autowired
+    private PackService packService;
 
-    public PackController(PackService packService) {
-        this.packService = packService;
-    }
-
-    @PostMapping
+    @PostMapping(consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Pack> createPack(@RequestBody PackRequestDTO requestDTO) {
-        Pack createdPack = packService.createPack(requestDTO);
+    public ResponseEntity<PackResponseDTO> createPack(
+            @RequestPart("pack") PackRequestDTO packRequestDTO,
+            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+        PackResponseDTO createdPack = packService.createPack(packRequestDTO, imageFile);
         return new ResponseEntity<>(createdPack, HttpStatus.CREATED);
     }
 
