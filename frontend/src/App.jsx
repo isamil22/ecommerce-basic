@@ -30,7 +30,8 @@ import AdminCategoryForm from './pages/admin/AdminCategoryForm.jsx';
 import AdminHeroPage from './pages/admin/AdminHeroPage.jsx';
 import AdminPackForm from './pages/admin/AdminPackForm.jsx';
 import AdminPacksPage from './pages/admin/AdminPacksPage.jsx';
-import PacksPage from "./pages/PacksPage.jsx"; // <<< THIS IS THE MISSING LINE
+import PacksPage from "./pages/PacksPage.jsx";
+import PackDetailPage from "./pages/PackDetailPage.jsx";
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,6 +92,7 @@ function App() {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/packs" element={<PacksPage />} />
+                        <Route path="/packs/:id" element={<PackDetailPage />} />
                         <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} />} />
                         <Route path="/hello" element={<HelloPage />} />
                         <Route

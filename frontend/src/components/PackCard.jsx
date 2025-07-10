@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const PackCard = ({ pack }) => {
     return (
-        <div className="border rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
+        <Link to={`/packs/${pack.id}`} className="block border rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
             <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-800">{pack.name}</h3>
                 <p className="text-gray-600">{pack.description}</p>
@@ -18,7 +19,7 @@ const PackCard = ({ pack }) => {
                     </ul>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 };
 

@@ -98,6 +98,7 @@ public class PackService {
         dto.setId(product.getId());
         dto.setName(product.getName());
         dto.setPrice(product.getPrice());
+        dto.setImages(product.getImages()); // Added images to the DTO
         return dto;
     }
 }

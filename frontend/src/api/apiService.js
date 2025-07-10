@@ -213,3 +213,7 @@ export const createPack = (packData) => {
 export const getAllPacks = () => {
     return apiService.get('/packs');
 };
+
+export const getPackById = (id) => {
+    return apiService.get(`/packs/${id}`);
+};
