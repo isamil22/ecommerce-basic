@@ -1,5 +1,9 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.PackRequestDTO;
+import com.example.demo.dto.PackResponseDTO;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.mapper.PackMapper;
 import com.example.demo.model.Pack;
 import com.example.demo.model.PackItem;
 import com.example.demo.model.Product;
@@ -8,6 +12,7 @@ import com.example.demo.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,6 +35,9 @@ public class PackService {
     @Autowired
     private S3Service s3Service;
 
+    @Autowired
+    private PackMapper packMapper;
+
     public List<Pack> getAllPacks() {
         return packRepository.findAll();
     }
@@ -39,8 +47,35 @@ public class PackService {
     }
 
     @Transactional
-    public Pack createPack(Pack pack) {
-        return packRepository.save(pack);
+    public PackResponseDTO createPack(PackRequestDTO packRequestDTO, MultipartFile imageFile) throws IOException {
+        Pack pack = new Pack();
+        pack.setName(packRequestDTO.getName());
+        pack.setDescription(packRequestDTO.getDescription());
+        pack.setPrice(packRequestDTO.getPrice());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = s3Service.saveImage(imageFile);
+            pack.setImageUrl(imageUrl);
+        }
+
+        List<PackItem> items = packRequestDTO.getItems().stream().map(itemDTO -> {
+            PackItem packItem = new PackItem();
+            Product defaultProduct = productRepository.findById(itemDTO.getDefaultProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Default product not found"));
+            packItem.setDefaultProduct(defaultProduct);
+
+            List<Product> variationProducts = itemDTO.getVariationProductIds().stream()
+                    .map(id -> productRepository.findById(id)
+                            .orElseThrow(() -> new ResourceNotFoundException("Variation product not found")))
+                    .collect(Collectors.toList());
+            packItem.setVariationProducts(variationProducts);
+            packItem.setPack(pack);
+            return packItem;
+        }).collect(Collectors.toList());
+
+        pack.setItems(items);
+        Pack savedPack = packRepository.save(pack);
+        return packMapper.toResponseDTO(savedPack);
     }
 
     @Transactional
@@ -57,18 +92,25 @@ public class PackService {
     }
 
     @Transactional
-    public Pack updateDefaultProduct(Long packId, Long itemId, Long productId) throws IOException {
-        Pack pack = packRepository.findById(packId).orElseThrow(() -> new RuntimeException("Pack not found"));
-        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
+    public PackResponseDTO updateDefaultProduct(Long packId, Long itemId, Long productId) throws IOException {
+        Pack pack = packRepository.findById(packId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + packId));
 
         PackItem itemToUpdate = pack.getItems().stream()
                 .filter(item -> item.getId().equals(itemId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found in pack"));
+                .orElseThrow(() -> new ResourceNotFoundException("PackItem not found with id: " + itemId));
 
-        itemToUpdate.setDefaultProduct(product);
+        Product newDefaultProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        itemToUpdate.setDefaultProduct(newDefaultProduct);
+
+        // After updating the default product, regenerate the composite image
         updatePackImage(pack);
-        return packRepository.save(pack);
+
+        Pack updatedPack = packRepository.save(pack);
+        return packMapper.toResponseDTO(updatedPack);
     }
 
     private void updatePackImage(Pack pack) throws IOException {
