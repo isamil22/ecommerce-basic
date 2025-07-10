@@ -19,9 +19,13 @@ const AdminPackForm = () => {
         const fetchProducts = async () => {
             try {
                 const response = await getAllProducts();
-                setProducts(response.data.products);
+                // CORRECTED: Ensure products are read from response.data.content
+                // and provide a fallback to an empty array.
+                const productsArray = response.data.content || [];
+                setProducts(productsArray);
             } catch (err) {
                 setError('Failed to fetch products.');
+                console.error("Failed to fetch products:", err);
             }
         };
         fetchProducts();
@@ -63,11 +67,8 @@ const AdminPackForm = () => {
         setError('');
 
         const formData = new FormData();
-
-        // Append the pack data as a JSON string under the key "pack"
         formData.append('pack', new Blob([JSON.stringify(packData)], { type: 'application/json' }));
 
-        // Append the image file under the key "image"
         if (image) {
             formData.append('image', image);
         } else {
@@ -89,7 +90,6 @@ const AdminPackForm = () => {
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Create New Pack</h2>
             {error && <p className="text-red-500 bg-red-100 p-3 rounded-md mb-4">{error}</p>}
             <form onSubmit={handleSubmit}>
-                {/* Standard form fields */}
                 <div className="mb-4">
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
                     <input type="text" name="name" id="name" value={packData.name} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" required />
@@ -103,7 +103,6 @@ const AdminPackForm = () => {
                     <input type="number" name="price" id="price" value={packData.price} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" required />
                 </div>
 
-                {/* NEW: Image Upload Field and Preview */}
                 <div className="mb-4">
                     <label htmlFor="image" className="block text-sm font-medium text-gray-700">Pack Image</label>
                     <input

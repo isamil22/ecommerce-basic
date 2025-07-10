@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException; // 1. Add this import
 import java.util.List;
 
 @RestController
@@ -24,7 +25,7 @@ public class PackController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PackResponseDTO> createPack(
             @RequestPart("pack") PackRequestDTO packRequestDTO,
-            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart(value = "image", required = false) MultipartFile imageFile) throws IOException { // 2. Add 'throws IOException'
         PackResponseDTO createdPack = packService.createPack(packRequestDTO, imageFile);
         return new ResponseEntity<>(createdPack, HttpStatus.CREATED);
     }

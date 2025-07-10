@@ -5,6 +5,7 @@ import com.example.demo.dto.PackItemResponseDTO;
 import com.example.demo.dto.PackRequestDTO;
 import com.example.demo.dto.PackResponseDTO;
 import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.mapper.ProductMapper;
 import com.example.demo.model.Pack;
 import com.example.demo.model.PackItem;
 import com.example.demo.model.Product;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,21 +30,20 @@ public class PackService {
     private ProductRepository productRepository;
 
     @Autowired
-    private S3Service s3Service; // S3Service is used for file uploads
+    private S3Service s3Service;
 
-    /**
-     * UPDATED: This method now accepts a MultipartFile.
-     * It uploads the file to your S3 bucket and saves the URL to the pack.
-     */
-    public PackResponseDTO createPack(PackRequestDTO packRequestDTO, MultipartFile imageFile) {
+    @Autowired
+    private ProductMapper productMapper;
+
+    public PackResponseDTO createPack(PackRequestDTO packRequestDTO, MultipartFile imageFile) throws IOException {
         Pack pack = new Pack();
         pack.setName(packRequestDTO.getName());
         pack.setDescription(packRequestDTO.getDescription());
         pack.setPrice(packRequestDTO.getPrice());
 
-        // Upload image to S3 and set the URL on the pack entity
         if (imageFile != null && !imageFile.isEmpty()) {
-            String imageUrl = s3Service.uploadFile(imageFile);
+            // CORRECTED: Changed from uploadFile to saveImage to match S3Service
+            String imageUrl = s3Service.saveImage(imageFile);
             pack.setImageUrl(imageUrl);
         }
 
@@ -73,7 +74,17 @@ public class PackService {
         return convertToResponseDTO(savedPack);
     }
 
-    // ... other existing methods (getAllPacks, getPackById, etc.) ...
+    public List<PackResponseDTO> getAllPacks() {
+        return packRepository.findAll().stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public PackResponseDTO getPackById(Long id) {
+        Pack pack = packRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + id));
+        return convertToResponseDTO(pack);
+    }
 
     private PackResponseDTO convertToResponseDTO(Pack pack) {
         PackResponseDTO dto = new PackResponseDTO();
@@ -93,8 +104,16 @@ public class PackService {
     private PackItemResponseDTO convertItemToResponseDTO(PackItem item) {
         PackItemResponseDTO itemDto = new PackItemResponseDTO();
         itemDto.setId(item.getId());
-        // You will need a proper mapping for Product to ProductDTO here
-        // For now, this structure is sufficient for the pack creation logic.
+        if (item.getDefaultProduct() != null) {
+            itemDto.setDefaultProduct(productMapper.toDTO(item.getDefaultProduct()));
+        }
+        if (item.getVariationProducts() != null) {
+            itemDto.setVariationProducts(
+                    item.getVariationProducts().stream()
+                            .map(productMapper::toDTO)
+                            .collect(Collectors.toList())
+            );
+        }
         return itemDto;
     }
 }
