@@ -1,57 +1,50 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.PackRequestDTO;
 import com.example.demo.dto.PackResponseDTO;
-import com.example.demo.dto.UpdateDefaultProductRequestDTO;
+import com.example.demo.model.Pack;
 import com.example.demo.service.PackService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/packs")
-@CrossOrigin(origins = "*")
 public class PackController {
 
-    @Autowired
-    private PackService packService;
+    private final PackService packService;
 
-    @PostMapping
-    public ResponseEntity<PackResponseDTO> createPack(@RequestPart("pack") PackRequestDTO packRequestDTO,
-                                                      @RequestPart(value = "image", required = false) MultipartFile imageFile) throws IOException {
-        PackResponseDTO createdPack = packService.createPack(packRequestDTO, imageFile);
-        return new ResponseEntity<>(createdPack, HttpStatus.CREATED);
+    public PackController(PackService packService) {
+        this.packService = packService;
     }
 
     @GetMapping
     public ResponseEntity<List<PackResponseDTO>> getAllPacks() {
-        return ResponseEntity.ok(packService.getAllPacks());
+        // Map the List<Pack> to List<PackResponseDTO>
+        List<PackResponseDTO> packs = packService.getAllPacks().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(packs);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PackResponseDTO> getPackById(@PathVariable Long id) {
-        return ResponseEntity.ok(packService.getPackById(id));
+        // Map the Optional<Pack> to PackResponseDTO
+        Optional<Pack> packOptional = packService.getPackById(id);
+        return packOptional.map(pack -> ResponseEntity.ok(convertToDto(pack)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * NEW ENDPOINT: Updates the default product for a pack item and regenerates the pack image.
-     */
-    @PutMapping("/{packId}/items/{itemId}/default-product")
-    public ResponseEntity<PackResponseDTO> updateDefaultProduct(
-            @PathVariable Long packId,
-            @PathVariable Long itemId,
-            @RequestBody UpdateDefaultProductRequestDTO request) {
-        try {
-            PackResponseDTO updatedPack = packService.updateDefaultProduct(packId, itemId, request.getProductId());
-            return ResponseEntity.ok(updatedPack);
-        } catch (IOException e) {
-            // Consider more specific error handling/logging
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    // Utility method to convert Pack to PackResponseDTO
+    private PackResponseDTO convertToDto(Pack pack) {
+        // Assuming PackResponseDTO has a constructor that takes Pack entity
+        // or you can set fields manually
+        PackResponseDTO dto = new PackResponseDTO();
+        dto.setId(pack.getId());
+        dto.setName(pack.getName());
+        // set other fields as needed
+        return dto;
     }
 }
