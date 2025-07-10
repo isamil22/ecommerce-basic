@@ -13,6 +13,7 @@ import com.example.demo.repositories.PackRepository;
 import com.example.demo.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -35,17 +36,15 @@ public class PackService {
     @Autowired
     private ProductMapper productMapper;
 
+    @Autowired
+    private ImageCompositionService imageCompositionService; // Inject the new service
+
+    @Transactional
     public PackResponseDTO createPack(PackRequestDTO packRequestDTO, MultipartFile imageFile) throws IOException {
         Pack pack = new Pack();
         pack.setName(packRequestDTO.getName());
         pack.setDescription(packRequestDTO.getDescription());
         pack.setPrice(packRequestDTO.getPrice());
-
-        if (imageFile != null && !imageFile.isEmpty()) {
-            // CORRECTED: Changed from uploadFile to saveImage to match S3Service
-            String imageUrl = s3Service.saveImage(imageFile);
-            pack.setImageUrl(imageUrl);
-        }
 
         List<PackItem> items = new ArrayList<>();
         if (packRequestDTO.getItems() != null) {
@@ -70,9 +69,69 @@ public class PackService {
         }
         pack.setItems(items);
 
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = s3Service.saveImage(imageFile);
+            pack.setImageUrl(imageUrl);
+        } else {
+            // Generate composite image on creation if no main image is uploaded
+            updatePackImage(pack);
+        }
+
         Pack savedPack = packRepository.save(pack);
         return convertToResponseDTO(savedPack);
     }
+
+    /**
+     * NEW: Updates a pack item's default product and regenerates the main pack image.
+     */
+    @Transactional
+    public PackResponseDTO updateDefaultProduct(Long packId, Long packItemId, Long newDefaultProductId) throws IOException {
+        Pack pack = packRepository.findById(packId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + packId));
+
+        PackItem itemToUpdate = pack.getItems().stream()
+                .filter(item -> item.getId().equals(packItemId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("PackItem not found with id: " + packItemId));
+
+        Product newDefaultProduct = productRepository.findById(newDefaultProductId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + newDefaultProductId));
+
+        itemToUpdate.setDefaultProduct(newDefaultProduct);
+
+        updatePackImage(pack); // Regenerate and save the composite image
+
+        Pack savedPack = packRepository.save(pack);
+        return convertToResponseDTO(savedPack);
+    }
+
+    /**
+     * NEW: Helper method to regenerate and save the composite image.
+     */
+    private void updatePackImage(Pack pack) throws IOException {
+        if (pack.getItems() == null || pack.getItems().isEmpty()) {
+            return; // Nothing to compose
+        }
+
+        List<String> imageUrls = pack.getItems().stream()
+                .map(item -> item.getDefaultProduct().getImages().get(0)) // Assumes product has at least one image
+                .collect(Collectors.toList());
+
+        if (imageUrls.isEmpty()) {
+            pack.setImageUrl(null);
+            return;
+        }
+
+        byte[] compositeImageBytes = imageCompositionService.createCompositeImage(imageUrls);
+
+        if (compositeImageBytes.length > 0) {
+            String newImageUrl = s3Service.saveImage(compositeImageBytes, "pack-" + pack.getId() + "-composite.png");
+            pack.setImageUrl(newImageUrl);
+        }
+    }
+
+
+    // The rest of your service methods (getAllPacks, getPackById, converters) remain the same.
 
     public List<PackResponseDTO> getAllPacks() {
         return packRepository.findAll().stream()
