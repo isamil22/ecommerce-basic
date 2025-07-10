@@ -25,8 +25,9 @@ public class Pack {
     private String name;
     private String description;
     private double price;
+    private String imageUrl; // CORRECT: Field for the main pack image
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER) // CORRECTED: Was LAZY
+    @OneToMany(mappedBy = "pack", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PackItem> items = new ArrayList<>();
 }

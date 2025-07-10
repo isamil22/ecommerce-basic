@@ -77,6 +77,7 @@ public class PackService {
         dto.setName(pack.getName());
         dto.setDescription(pack.getDescription());
         dto.setPrice(pack.getPrice());
+        dto.setImageUrl(pack.getImageUrl()); // CORRECT: Service maps the imageUrl to the DTO
         dto.setItems(pack.getItems().stream()
                 .map(this::convertItemToResponseDTO)
                 .collect(Collectors.toList()));
