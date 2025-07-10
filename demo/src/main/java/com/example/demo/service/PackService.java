@@ -106,8 +106,8 @@ public class PackService {
 
         itemToUpdate.setDefaultProduct(newDefaultProduct);
 
-        // After updating the default product, regenerate the composite image
-        updatePackImage(pack);
+        // FIX: This line causes the error and should be removed.
+        // updatePackImage(pack);
 
         Pack updatedPack = packRepository.save(pack);
         return packMapper.toResponseDTO(updatedPack);
