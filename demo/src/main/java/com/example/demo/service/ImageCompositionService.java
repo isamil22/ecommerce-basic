@@ -1,64 +1,83 @@
 package com.example.demo.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
 import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.Graphics2D;
+import java.util.stream.Collectors;
 
 @Service
 public class ImageCompositionService {
 
-    /**
-     * Creates a composite image by stitching together multiple images from URLs horizontally.
-     * @param imageUrls A list of public URLs for the images to combine.
-     * @return A byte array representing the final composite PNG image.
-     * @throws IOException If an image cannot be read from a URL.
-     */
+    private static final Logger logger = LoggerFactory.getLogger(ImageCompositionService.class);
+
     public byte[] createCompositeImage(List<String> imageUrls) throws IOException {
-        if (imageUrls == null || imageUrls.isEmpty()) {
+        // 1. Filter out any null or blank URLs first.
+        List<String> validImageUrls = imageUrls.stream()
+                .filter(url -> url != null && !url.trim().isEmpty())
+                .collect(Collectors.toList());
+
+        if (validImageUrls.isEmpty()) {
+            logger.warn("No valid image URLs provided to create a composite image.");
             return new byte[0];
         }
 
         List<BufferedImage> images = new ArrayList<>();
-        for (String url : imageUrls) {
-            if (url != null && !url.trim().isEmpty()) {
-                images.add(ImageIO.read(new URL(url)));
+        // 2. Safely read images and log errors for any that fail.
+        for (String urlString : validImageUrls) {
+            try {
+                URL url = new URL(urlString);
+                BufferedImage image = ImageIO.read(url);
+                if (image != null) {
+                    images.add(image);
+                } else {
+                    // This is key: log the specific URL that failed.
+                    logger.error("Failed to read image from URL (it was null): {}", urlString);
+                }
+            } catch (IOException e) {
+                logger.error("IOException while reading image from URL: {}", urlString, e);
             }
         }
 
+        // 3. Ensure we have images to process before continuing.
         if (images.isEmpty()) {
+            logger.error("Could not load any images from the provided URLs. Cannot create composite image.");
             return new byte[0];
         }
 
-        // Use dimensions of the first image as the standard for height
-        int standardHeight = images.get(0).getHeight();
+        // Calculate dimensions for the composite image
         int totalWidth = 0;
-
-        // Calculate total width based on scaled images
+        int maxHeight = 0;
         for (BufferedImage img : images) {
-            double scale = (double) standardHeight / img.getHeight();
-            totalWidth += (int) (img.getWidth() * scale);
+            totalWidth += img.getWidth();
+            if (img.getHeight() > maxHeight) {
+                maxHeight = img.getHeight();
+            }
         }
 
-        BufferedImage compositeImage = new BufferedImage(totalWidth, standardHeight, BufferedImage.TYPE_INT_ARGB);
+        // Create the composite image canvas
+        BufferedImage compositeImage = new BufferedImage(totalWidth, maxHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = compositeImage.createGraphics();
 
+        // Draw each image onto the canvas
         int currentX = 0;
-        for (BufferedImage image : images) {
-            double scale = (double) standardHeight / image.getHeight();
-            int scaledWidth = (int) (image.getWidth() * scale);
-            g2d.drawImage(image, currentX, 0, scaledWidth, standardHeight, null);
-            currentX += scaledWidth;
+        for (BufferedImage img : images) {
+            g2d.drawImage(img, currentX, 0, null);
+            currentX += img.getWidth();
         }
         g2d.dispose();
 
+        // Convert the final image to a byte array
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            ImageIO.write(compositeImage, "png", baos);
+            ImageIO.write(compositeImage, "PNG", baos);
             return baos.toByteArray();
         }
     }

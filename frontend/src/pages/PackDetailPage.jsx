@@ -86,6 +86,7 @@ const PackItemSelector = ({ item, selectedProductId, onSelectionChange }) => (
 const PackDetailPage = () => {
     const { id } = useParams();
     const [pack, setPack] = useState(null);
+    const [packImageUrl, setPackImageUrl] = useState(''); // <-- ADD THIS LINE
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -96,6 +97,7 @@ const PackDetailPage = () => {
             try {
                 const response = await getPackById(id);
                 setPack(response.data);
+                setPackImageUrl(response.data.imageUrl); // <-- ADD THIS LINE
                 const initialSelections = {};
                 if (response.data && response.data.items) {
                     response.data.items.forEach(item => {
@@ -127,6 +129,7 @@ const PackDetailPage = () => {
         try {
             const response = await updateDefaultProductForPack(currentPackId, packItemId, selectedProductId);
             setPack(response.data);
+            setPackImageUrl(response.data.imageUrl); // <-- ADD THIS LINE
         } catch (err) {
             setError('Failed to update pack. Please try again.');
             setSelections(previousSelections);
@@ -161,10 +164,8 @@ const PackDetailPage = () => {
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-lg shadow-xl">
                             <img
-                                // Add a unique key to help React detect changes
-                                key={pack.imageUrl}
-                                // ✅ Add the cache-busting query parameter
-                                src={pack.imageUrl ? `${pack.imageUrl}?t=${new Date().getTime()}` : 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
+                                key={packImageUrl} // Use the state variable as the key
+                                src={packImageUrl ? `${packImageUrl}?t=${new Date().getTime()}` : 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
                                 alt={pack.name}
                                 className="w-full h-auto object-cover rounded-lg mb-6"
                             />
