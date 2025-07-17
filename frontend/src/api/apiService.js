@@ -196,6 +196,19 @@ export const uploadDescriptionImage = (formData) => {
 
 export const createPack = (formData) => apiService.post('/packs', formData);
 
+/**
+ * NEW: Updates an existing pack.
+ * The packData should be a FormData object, similar to createPack.
+ */
+export const updatePack = (id, formData) => {
+    // Note: The backend expects 'multipart/form-data' if you allow image updates.
+    // If not, you can send as 'application/json'. We'll assume you might update the image too.
+    return apiService.put(`/packs/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 
 export const getAllPacks = () => {
     return apiService.get('/packs');

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllPacks } from '../../api/apiService';
-import Loader from '../../components/Loader';
+import { getAllPacks } from '../../api/apiService'; // Correct path
+import Loader from '../../components/Loader'; // Correct path
 
 const AdminPacksPage = () => {
     const [packs, setPacks] = useState([]);
@@ -12,7 +12,6 @@ const AdminPacksPage = () => {
         const fetchPacks = async () => {
             try {
                 const response = await getAllPacks();
-                // This logic correctly handles the array format you're receiving.
                 const packsArray = Array.isArray(response.data) ? response.data : response.data.content;
 
                 if (Array.isArray(packsArray)) {
@@ -49,16 +48,28 @@ const AdminPacksPage = () => {
                 </Link>
             </div>
             {packs && packs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {packs.map((pack) => (
-                        <div key={pack.id} className="bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-2xl font-semibold">{pack.name}</h2>
-                            <p className="text-gray-600">{pack.description}</p>
-                            <p className="text-lg font-bold text-pink-500">
-                                {pack.price != null ? `$${pack.price.toFixed(2)}` : 'Price not available'}
-                            </p>
-                        </div>
-                    ))}
+                <div className="bg-white shadow-md rounded-lg">
+                    <ul className="divide-y divide-gray-200">
+                        {packs.map((pack) => (
+                            <li key={pack.id} className="p-4 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800">{pack.name}</h2>
+                                    <p className="text-gray-600">
+                                        {pack.price != null ? `$${pack.price.toFixed(2)}` : 'No price'}
+                                    </p>
+                                </div>
+                                <div>
+                                    {/* ✅ Add the "Edit" Link */}
+                                    <Link
+                                        to={`/admin/packs/edit/${pack.id}`}
+                                        className="text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        Edit
+                                    </Link>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             ) : (
                 <p>No packs found.</p>

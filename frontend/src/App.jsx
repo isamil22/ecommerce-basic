@@ -32,6 +32,7 @@ import AdminPackForm from './pages/admin/AdminPackForm.jsx';
 import AdminPacksPage from './pages/admin/AdminPacksPage.jsx';
 import PacksPage from "./pages/PacksPage.jsx";
 import PackDetailPage from "./pages/PackDetailPage.jsx";
+import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx'; // 1. Import the new page
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -118,7 +119,7 @@ function App() {
                             <Route path="products" element={<AdminProductsPage />} />
                             <Route path="products/new" element={<AdminProductForm />} />
                             <Route path="products/edit/:id" element={<AdminProductForm />} />
-                            <Route path="orders" element={<AdminOrdersPage />} />
+                            <Route path="orders" element={<AdminOrdersPage />} />d
                             <Route path="users" element={<AdminUsersPage />} />
                             <Route path="reviews" element={<AdminReviewsPage />} />
                             <Route path="categories" element={<AdminCategoriesPage />} />
@@ -126,6 +127,8 @@ function App() {
                             <Route path="categories/edit/:id" element={<AdminCategoryForm />} />
                             <Route path="packs" element={<AdminPacksPage />} />
                             <Route path="packs/new" element={<AdminPackForm />} />
+                            {/* 2. Add the new route for editing a pack */}
+                            <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
                         </Route>
                     </Routes>
                 </main>
@@ -136,4 +139,3 @@ function App() {
 }
 
 export default App;
-

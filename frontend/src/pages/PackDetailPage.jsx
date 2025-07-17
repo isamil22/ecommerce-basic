@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { getPackById, addToCart, updateDefaultProductForPack } from '../api/apiService';
 import Loader from '../components/Loader';
 
-// Sub-component for rendering a single selectable product.
 const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChange, isDefault }) => {
     const imageUrl = (product.images && product.images.length > 0)
         ? product.images[0]
@@ -162,7 +161,10 @@ const PackDetailPage = () => {
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-lg shadow-xl">
                             <img
-                                src={pack.imageUrl || 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
+                                // Add a unique key to help React detect changes
+                                key={pack.imageUrl}
+                                // ✅ Add the cache-busting query parameter
+                                src={pack.imageUrl ? `${pack.imageUrl}?t=${new Date().getTime()}` : 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
                                 alt={pack.name}
                                 className="w-full h-auto object-cover rounded-lg mb-6"
                             />
