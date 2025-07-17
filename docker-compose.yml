@@ -12,19 +12,19 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     command: --innodb-buffer-pool-size=256M
-    # This tells Docker how to check if the database is ready
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - my-network
 
   backend:
     build: ./demo
     restart: always
     ports:
       - '8082:8080'
-    # This makes the backend wait for the db to be healthy
     depends_on:
       db:
         condition: service_healthy
@@ -36,6 +36,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION}
       AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+    networks:
+      - my-network
 
   frontend:
     build: ./frontend
@@ -44,6 +46,11 @@ services:
       - '8081:80'
     depends_on:
       - backend
+    networks:
+      - my-network
 
 volumes:
   db_data:
+
+networks:
+  my-network:
