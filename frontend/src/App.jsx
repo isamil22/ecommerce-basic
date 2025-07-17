@@ -119,7 +119,7 @@ function App() {
                             <Route path="products" element={<AdminProductsPage />} />
                             <Route path="products/new" element={<AdminProductForm />} />
                             <Route path="products/edit/:id" element={<AdminProductForm />} />
-                            <Route path="orders" element={<AdminOrdersPage />} />d
+                            <Route path="orders" element={<AdminOrdersPage />} />
                             <Route path="users" element={<AdminUsersPage />} />
                             <Route path="reviews" element={<AdminReviewsPage />} />
                             <Route path="categories" element={<AdminCategoriesPage />} />

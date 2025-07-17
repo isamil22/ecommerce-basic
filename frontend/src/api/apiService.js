@@ -224,3 +224,7 @@ export const getPackById = (id) => {
 export const updateDefaultProductForPack = (packId, itemId, productId) => {
     return apiService.put(`/packs/${packId}/items/${itemId}/default-product`, { productId });
 };
+
+export const deletePack = (id) => {
+    return apiService.delete(`/packs/${id}`);
+};

@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 @Service
 public class PackService {
 
-    // ✅ 1. ADD LOGGER
     private static final Logger logger = LoggerFactory.getLogger(PackService.class);
 
     @Autowired
@@ -61,9 +60,6 @@ public class PackService {
         if (imageFile != null && !imageFile.isEmpty()) {
             String imageUrl = s3Service.saveImage(imageFile);
             pack.setImageUrl(imageUrl);
-        } else {
-            // Generate a composite image if no main image is provided
-            updatePackImage(pack);
         }
 
         List<PackItem> items = packRequestDTO.getItems().stream().map(itemDTO -> {
@@ -82,21 +78,53 @@ public class PackService {
         }).collect(Collectors.toList());
 
         pack.setItems(items);
+
+        if (pack.getImageUrl() == null) {
+            updatePackImage(pack);
+        }
+
         Pack savedPack = packRepository.save(pack);
 
         return packMapper.toResponseDTO(savedPack);
     }
 
     @Transactional
-    public Pack updatePack(Long id, Pack packDetails) {
-        Pack pack = packRepository.findById(id).orElseThrow(() -> new RuntimeException("Pack not found"));
-        pack.setName(packDetails.getName());
-        pack.setPrice(packDetails.getPrice());
-        pack.setItems(packDetails.getItems());
+    public PackResponseDTO updatePack(Long id, PackRequestDTO packRequestDTO, MultipartFile imageFile) throws IOException {
+        Pack pack = packRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + id));
 
-        updatePackImage(pack);
+        pack.setName(packRequestDTO.getName());
+        pack.setDescription(packRequestDTO.getDescription());
+        pack.setPrice(packRequestDTO.getPrice());
 
-        return packRepository.save(pack);
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String newImageUrl = s3Service.saveImage(imageFile);
+            pack.setImageUrl(newImageUrl);
+        }
+
+        pack.getItems().clear();
+        List<PackItem> newItems = packRequestDTO.getItems().stream().map(itemDTO -> {
+            PackItem packItem = new PackItem();
+            Product defaultProduct = productRepository.findById(itemDTO.getDefaultProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Default product not found with id: " + itemDTO.getDefaultProductId()));
+            packItem.setDefaultProduct(defaultProduct);
+
+            List<Product> variationProducts = itemDTO.getVariationProductIds().stream()
+                    .map(varId -> productRepository.findById(varId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Variation product not found with id: " + varId)))
+                    .collect(Collectors.toList());
+            packItem.setVariationProducts(variationProducts);
+            packItem.setPack(pack);
+            return packItem;
+        }).collect(Collectors.toList());
+        pack.getItems().addAll(newItems);
+
+        if (pack.getImageUrl() == null || (imageFile == null || imageFile.isEmpty())) {
+            updatePackImage(pack);
+        }
+
+        Pack updatedPack = packRepository.save(pack);
+        return packMapper.toResponseDTO(updatedPack);
     }
 
     public void deletePack(Long id) {
@@ -118,14 +146,12 @@ public class PackService {
 
         itemToUpdate.setDefaultProduct(newDefaultProduct);
 
-        // This will now handle errors gracefully instead of crashing
         updatePackImage(pack);
 
         Pack updatedPack = packRepository.save(pack);
         return packMapper.toResponseDTO(updatedPack);
     }
 
-    // ✅ 2. MAKE THE IMAGE UPDATE METHOD MORE DEFENSIVE
     private void updatePackImage(Pack pack) {
         try {
             if (pack.getItems() == null || pack.getItems().isEmpty()) {
@@ -137,7 +163,6 @@ public class PackService {
                     .map(item -> {
                         Product product = item.getDefaultProduct();
                         if (product != null && product.getImages() != null && !product.getImages().isEmpty()) {
-                            // Ensure the image URL is not null or blank before returning
                             String imageUrl = product.getImages().get(0);
                             if (imageUrl != null && !imageUrl.trim().isEmpty()) {
                                 logger.info("Found image URL for product ID {}: {}", product.getId(), imageUrl);
@@ -152,7 +177,7 @@ public class PackService {
 
             if (imageUrls.isEmpty()) {
                 logger.warn("No valid image URLs found to compose for pack ID {}. Image will not be updated.", pack.getId());
-                return; // Exit without changing the image
+                return;
             }
 
             logger.info("Composing new image for pack ID {} with URLs: {}", pack.getId(), imageUrls);
@@ -167,9 +192,6 @@ public class PackService {
                 logger.warn("Composite image byte array was empty for pack ID {}.", pack.getId());
             }
         } catch (Exception e) {
-            // Log the full error but do not let it crash the entire request.
-            // This prevents the 500 error. The user will see an error in the logs,
-            // but the app won't crash for other users.
             logger.error("!!! CRITICAL: Failed to update and compose pack image for pack ID {}. The operation will continue without an image update.", pack.getId(), e);
         }
     }

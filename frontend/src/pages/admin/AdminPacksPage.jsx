@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllPacks } from '../../api/apiService'; // Correct path
+import { getAllPacks, deletePack } from '../../api/apiService'; // Correct path
 import Loader from '../../components/Loader'; // Correct path
 
 const AdminPacksPage = () => {
@@ -8,28 +8,40 @@ const AdminPacksPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        const fetchPacks = async () => {
-            try {
-                const response = await getAllPacks();
-                const packsArray = Array.isArray(response.data) ? response.data : response.data.content;
+    const fetchPacks = async () => {
+        try {
+            const response = await getAllPacks();
+            const packsArray = Array.isArray(response.data) ? response.data : response.data.content;
 
-                if (Array.isArray(packsArray)) {
-                    setPacks(packsArray);
-                } else {
-                    setError('Received invalid data from server.');
-                }
-
-            } catch (err) {
-                setError('Failed to fetch packs.');
-                console.error("Fetch Packs Error:", err);
-            } finally {
-                setLoading(false);
+            if (Array.isArray(packsArray)) {
+                setPacks(packsArray);
+            } else {
+                setError('Received invalid data from server.');
             }
-        };
 
+        } catch (err) {
+            setError('Failed to fetch packs.');
+            console.error("Fetch Packs Error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchPacks();
     }, []);
+
+    const handleDelete = async (packId) => {
+        if (window.confirm('Are you sure you want to delete this pack?')) {
+            try {
+                await deletePack(packId);
+                fetchPacks(); // Refresh the list
+            } catch (err) {
+                setError('Failed to delete pack.');
+            }
+        }
+    };
+
 
     if (loading) {
         return <Loader />;
@@ -58,14 +70,21 @@ const AdminPacksPage = () => {
                                         {pack.price != null ? `$${pack.price.toFixed(2)}` : 'No price'}
                                     </p>
                                 </div>
-                                <div>
-                                    {/* ✅ Add the "Edit" Link */}
+                                <div className="space-x-4">
+                                    {/* This is the "Update" button */}
                                     <Link
                                         to={`/admin/packs/edit/${pack.id}`}
                                         className="text-blue-600 hover:text-blue-800 font-medium"
                                     >
                                         Edit
                                     </Link>
+                                    {/* This is the "Delete" button */}
+                                    <button
+                                        onClick={() => handleDelete(pack.id)}
+                                        className="text-red-600 hover:text-red-800 font-medium"
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                             </li>
                         ))}
