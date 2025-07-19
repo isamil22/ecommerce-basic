@@ -1,3 +1,4 @@
+//isamil22/ecommerce-basic/ecommerce-basic-84b68230fa5093db3372e926c83b8d7d7cb3ebc7/demo/src/main/java/com/example/demo/service/OrderService.java
 package com.example.demo.service;
 
 import com.example.demo.dto.CartDTO;
@@ -107,9 +108,13 @@ public class OrderService {
     }
 
     public void deleteOrder(Long orderId) {
-        if (!orderRepository.existsById(orderId)) {
-            throw new ResourceNotFoundException("Order not found with id: " + orderId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != Order.OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Order cannot be deleted unless its status is DELIVERED.");
         }
+
         orderRepository.deleteById(orderId);
     }
 
