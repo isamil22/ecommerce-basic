@@ -92,7 +92,7 @@ public class OrderService {
     }
 
     public List<OrderDTO> getAllOrders(){
-        return orderMapper.toDTOs(orderRepository.findAll());
+        return orderMapper.toDTOs(orderRepository.findByDeleted(false));
     }
 
     public List<OrderDTO> getUserOrders(Long userId){
@@ -107,15 +107,24 @@ public class OrderService {
         return orderMapper.toDTO(updatedOrder);
     }
 
-    public void deleteOrder(Long orderId) {
+    public void softDeleteOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if (order.getStatus() != Order.OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Order cannot be deleted unless its status is DELIVERED.");
-        }
+        order.setDeleted(true);
+        orderRepository.save(order);
+    }
 
-        orderRepository.deleteById(orderId);
+    public void restoreOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        order.setDeleted(false);
+        orderRepository.save(order);
+    }
+
+    public List<OrderDTO> getDeletedOrders() {
+        return orderMapper.toDTOs(orderRepository.findByDeleted(true));
     }
 
     public void deleteAllOrders() {

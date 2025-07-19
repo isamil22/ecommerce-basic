@@ -1,4 +1,4 @@
-// isamil22/ecommerce-basic/ecommerce-basic-71c6fa0046a0f3d47a9ee9dfa53fa2560484eb0f/demo/src/main/java/com/example/demo/model/Order.java
+// isamil22/ecommerce-basic/ecommerce-basic-d60fd8bd0a814edb150711f29c7c778b681eec90/demo/src/main/java/com/example/demo/model/Order.java
 package com.example.demo.model;
 
 import jakarta.persistence.*;
@@ -42,4 +42,6 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    private boolean deleted = false;
 }

@@ -57,8 +57,22 @@ public class OrderController {
     @DeleteMapping("/{orderId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long orderId) {
-        orderService.deleteOrder(orderId);
+        orderService.softDeleteOrder(orderId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{orderId}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> restoreOrder(@PathVariable Long orderId) {
+        orderService.restoreOrder(orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/deleted")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderDTO>> getDeletedOrders() {
+        List<OrderDTO> orders = orderService.getDeletedOrders();
+        return ResponseEntity.ok(orders);
     }
 
     @DeleteMapping("/all")

@@ -10,4 +10,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Check if any orders exist for a given user ID
     boolean existsByUserId(Long userId);
+
+    List<Order> findByDeleted(boolean deleted);
 }
