@@ -1,3 +1,4 @@
+// isamil22/ecommerce-basic/ecommerce-basic-71c6fa0046a0f3d47a9ee9dfa53fa2560484eb0f/demo/src/main/java/com/example/demo/controller/OrderController.java
 package com.example.demo.controller;
 
 import com.example.demo.dto.OrderDTO;
@@ -22,10 +23,12 @@ public class OrderController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderDTO> createOrder(@AuthenticationPrincipal UserDetails userDetails,
+                                                @RequestParam String clientFullName,
+                                                @RequestParam String city,
                                                 @RequestParam String address,
                                                 @RequestParam String phoneNumber){
         Long userId = ((User) userDetails).getId();
-        OrderDTO orderDTO = orderService.createOrder(userId, address, phoneNumber);
+        OrderDTO orderDTO = orderService.createOrder(userId, address, phoneNumber, clientFullName, city);
         return ResponseEntity.ok(orderDTO);
     }
 
@@ -50,6 +53,4 @@ public class OrderController {
         OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
         return ResponseEntity.ok(updatedOrder);
     }
-
-
 }

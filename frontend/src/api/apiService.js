@@ -59,9 +59,6 @@ export const addToCart = (productId, quantity) => {
     return apiService.post(`/cart/add?productId=${productId}&quantity=${quantity}`);
 };
 
-export const createOrder = (orderData) => {
-    return apiService.post(`/orders?address=${orderData.address}&phoneNumber=${orderData.phoneNumber}`);
-};
 
 export const getUserOrders = () => {
     return apiService.get('/orders/user');
@@ -227,4 +224,15 @@ export const updateDefaultProductForPack = (packId, itemId, productId) => {
 
 export const deletePack = (id) => {
     return apiService.delete(`/packs/${id}`);
+};
+
+
+export const createOrder = (orderData) => {
+    // Using URLSearchParams to build the query string correctly
+    const params = new URLSearchParams();
+    params.append('clientFullName', orderData.clientFullName);
+    params.append('city', orderData.city);
+    params.append('address', orderData.address);
+    params.append('phoneNumber', orderData.phoneNumber);
+    return apiService.post(`/orders?${params.toString()}`);
 };

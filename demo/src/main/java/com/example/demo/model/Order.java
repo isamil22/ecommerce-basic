@@ -1,3 +1,4 @@
+// isamil22/ecommerce-basic/ecommerce-basic-71c6fa0046a0f3d47a9ee9dfa53fa2560484eb0f/demo/src/main/java/com/example/demo/model/Order.java
 package com.example.demo.model;
 
 import jakarta.persistence.*;
@@ -25,6 +26,8 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // This will now correctly refer to your User entity
 
+    private String clientFullName; // ADDED
+    private String city; // ADDED
     private String address;
     private String phoneNumber;
 
