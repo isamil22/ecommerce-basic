@@ -1,3 +1,5 @@
+// demo/src/main/java/com/example/demo/specification/ProductSpecification.java
+
 package com.example.demo.specification;
 
 import com.example.demo.model.Product;
@@ -12,7 +14,7 @@ import java.util.List;
 @Component
 public class ProductSpecification {
 
-    public Specification<Product> getProducts(String search, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, Long categoryId) {
+    public Specification<Product> getProducts(String search, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, Long categoryId, String type) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -49,6 +51,15 @@ public class ProductSpecification {
 
             if (categoryId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("category").get("id"), categoryId));
+            }
+
+            if (type != null && !type.isEmpty()) {
+                try {
+                    Product.ProductType productType = Product.ProductType.valueOf(type.toUpperCase());
+                    predicates.add(criteriaBuilder.equal(root.get("type"), productType));
+                } catch (IllegalArgumentException e) {
+                    // Handle invalid type gracefully
+                }
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

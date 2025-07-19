@@ -1,3 +1,5 @@
+// demo/src/main/java/com/example/demo/controller/ProductController.java
+
 package com.example.demo.controller;
 
 import com.example.demo.dto.ProductDTO;
@@ -78,8 +80,9 @@ public class ProductController {
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) Boolean bestseller,
             @RequestParam(required = false) Boolean newArrival,
+            @RequestParam(required = false) String type,
             Pageable pageable) {
-        Page<ProductDTO> products = productService.getAllProducts(search, categoryId, minPrice, maxPrice, brand, bestseller, newArrival, pageable);
+        Page<ProductDTO> products = productService.getAllProducts(search, categoryId, minPrice, maxPrice, brand, bestseller, newArrival, type, pageable);
         return ResponseEntity.ok(products);
     }
 

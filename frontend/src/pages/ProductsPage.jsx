@@ -1,3 +1,5 @@
+// frontend/src/pages/ProductsPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getAllProducts, getAllCategories } from '../api/apiService';
@@ -18,6 +20,7 @@ const ProductsPage = () => {
         minPrice: searchParams.get('minPrice') || '',
         maxPrice: searchParams.get('maxPrice') || '',
         sort: searchParams.get('sort') || 'name,asc',
+        type: searchParams.get('type') || 'all', // Add type filter
     });
 
     // Fetch categories for the filter dropdown on initial component load
@@ -41,6 +44,9 @@ const ProductsPage = () => {
                 }
                 if (filters.minPrice) params.append('minPrice', filters.minPrice);
                 if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+                if (filters.type && filters.type !== 'all') {
+                    params.append('type', filters.type);
+                }
                 params.append('sort', filters.sort); // Always include sort
 
                 const response = await getAllProducts(params);
@@ -76,6 +82,9 @@ const ProductsPage = () => {
         }
         if (newFilters.minPrice) newSearchParams.set('minPrice', newFilters.minPrice);
         if (newFilters.maxPrice) newSearchParams.set('maxPrice', newFilters.maxPrice);
+        if (newFilters.type && newFilters.type !== 'all') {
+            newSearchParams.set('type', newFilters.type);
+        }
         newSearchParams.set('sort', newFilters.sort);
         setSearchParams(newSearchParams);
     };
@@ -143,6 +152,48 @@ const ProductsPage = () => {
                         <option value="price,asc">Price: Low to High</option>
                         <option value="price,desc">Price: High to Low</option>
                     </select>
+                </div>
+                <div className="mt-4 flex justify-center space-x-4">
+                    <label>
+                        <input
+                            type="radio"
+                            name="type"
+                            value="all"
+                            checked={filters.type === 'all'}
+                            onChange={handleFilterChange}
+                        />
+                        All
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="type"
+                            value="men"
+                            checked={filters.type === 'men'}
+                            onChange={handleFilterChange}
+                        />
+                        Men
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="type"
+                            value="women"
+                            checked={filters.type === 'women'}
+                            onChange={handleFilterChange}
+                        />
+                        Women
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="type"
+                            value="pack"
+                            checked={filters.type === 'pack'}
+                            onChange={handleFilterChange}
+                        />
+                        Packs
+                    </label>
                 </div>
             </div>
 

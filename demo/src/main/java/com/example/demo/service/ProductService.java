@@ -1,3 +1,5 @@
+// demo/src/main/java/com/example/demo/service/ProductService.java
+
 package com.example.demo.service;
 
 import com.example.demo.dto.ProductDTO;
@@ -109,8 +111,8 @@ public class ProductService {
      * and returns a paginated result.
      */
     @Transactional(readOnly = true)
-    public Page<ProductDTO> getAllProducts(String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, Pageable pageable) {
-        Specification<Product> spec = productSpecification.getProducts(search, minPrice, maxPrice, brand, bestseller, newArrival, categoryId);
+    public Page<ProductDTO> getAllProducts(String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, String type, Pageable pageable) {
+        Specification<Product> spec = productSpecification.getProducts(search, minPrice, maxPrice, brand, bestseller, newArrival, categoryId, type);
         return productRepository.findAll(spec, pageable)
                 .map(productMapper::toDTO);
     }

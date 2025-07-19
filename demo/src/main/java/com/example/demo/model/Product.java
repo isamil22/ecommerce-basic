@@ -1,3 +1,5 @@
+// demo/src/main/java/com/example/demo/model/Product.java
+
 package com.example.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference; // <-- IMPORT THIS
@@ -34,6 +36,9 @@ public class Product {
     private boolean bestseller;
     private boolean newArrival;
 
+    @Enumerated(EnumType.STRING)
+    private ProductType type; // Add this line
+
     @JsonManagedReference // <-- ADD THIS ANNOTATION
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
@@ -41,4 +46,8 @@ public class Product {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    public enum ProductType {
+        MEN, WOMEN, PACK
+    }
 }
