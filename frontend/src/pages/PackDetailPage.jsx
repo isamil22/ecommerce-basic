@@ -98,11 +98,19 @@ const PackDetailPage = () => {
     useEffect(() => {
         if (!pack || Object.keys(selections).length === 0) return;
 
+        // **NEW LOGIC**: Check if the current selection is the same as the initial default selection.
+        const isDefaultSelection = JSON.stringify(selections) === JSON.stringify(initialSelections);
+
+        if (isDefaultSelection && initialPackImageUrl) {
+            // If it's the default selection, use the original pack image from the backend.
+            setComposedImageUrl(initialPackImageUrl);
+            return;
+        }
+
         const composeImage = async () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            // Find the image URLs of the currently selected products
             const imageUrls = pack.items.map(item => {
                 const selectedProductId = selections[item.id];
                 const allProducts = [item.defaultProduct, ...item.variationProducts];
@@ -110,21 +118,22 @@ const PackDetailPage = () => {
                 return selectedProduct?.images?.[0] || null;
             }).filter(Boolean);
 
-            if (imageUrls.length === 0) return;
+            if (imageUrls.length === 0) {
+                setComposedImageUrl(initialPackImageUrl);
+                return;
+            };
 
             try {
-                // Asynchronously load all images
                 const images = await Promise.all(imageUrls.map(url => {
                     return new Promise((resolve, reject) => {
                         const img = new Image();
-                        img.crossOrigin = "Anonymous"; // Crucial for loading images from other domains (like S3)
+                        img.crossOrigin = "Anonymous";
                         img.onload = () => resolve(img);
                         img.onerror = (err) => reject(new Error(`Failed to load image: ${url}`));
                         img.src = url;
                     });
                 }));
 
-                // Calculate the size of the canvas needed to fit all images side-by-side
                 let totalWidth = 0;
                 let maxHeight = 0;
                 images.forEach(img => {
@@ -137,25 +146,22 @@ const PackDetailPage = () => {
                 canvas.width = totalWidth;
                 canvas.height = maxHeight;
 
-                // Draw each loaded image onto the canvas
                 let currentX = 0;
                 images.forEach(img => {
                     ctx.drawImage(img, currentX, 0);
                     currentX += img.width;
                 });
 
-                // Convert the canvas content to a Data URL and update the state
                 setComposedImageUrl(canvas.toDataURL('image/png'));
             } catch (err) {
                 console.error("Image composition failed:", err);
-                // If any image fails to load (e.g., due to a CORS error), fall back to the original pack image
                 setComposedImageUrl(initialPackImageUrl);
             }
         };
 
         composeImage();
 
-    }, [selections, pack, initialPackImageUrl]);
+    }, [selections, pack, initialPackImageUrl, initialSelections]);
 
     // This effect runs once to fetch the initial pack data
     useEffect(() => {
@@ -164,8 +170,8 @@ const PackDetailPage = () => {
                 const response = await getPackById(id);
                 const packData = response.data;
                 setPack(packData);
-                setComposedImageUrl(packData.imageUrl); // Set the initial image
-                setInitialPackImageUrl(packData.imageUrl); // Store the original image URL for reset
+                setComposedImageUrl(packData.imageUrl);
+                setInitialPackImageUrl(packData.imageUrl);
 
                 const initial = {};
                 if (packData && packData.items) {
@@ -188,14 +194,12 @@ const PackDetailPage = () => {
     }, [id]);
 
     const handleSelectionChange = (packItemId, selectedProductId) => {
-        // This ONLY updates the state on the frontend. No backend call is made.
         setSelections(prev => ({ ...prev, [packItemId]: selectedProductId }));
     };
 
     const handleReset = () => {
-        // Resets the selections back to the original defaults
         setSelections(initialSelections);
-        // The useEffect hook will see that selections have changed and automatically re-compose the default image.
+        setComposedImageUrl(initialPackImageUrl);
         setMessage('Selections have been reset to their default options.');
         setError('');
     };
@@ -227,7 +231,7 @@ const PackDetailPage = () => {
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-lg shadow-xl">
                             <img
-                                key={composedImageUrl} // Using key to force re-render when the image source changes
+                                key={composedImageUrl}
                                 src={composedImageUrl || 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
                                 alt={pack.name}
                                 className="w-full h-auto object-cover rounded-lg mb-6"
@@ -277,6 +281,5 @@ const PackDetailPage = () => {
 };
 
 export default PackDetailPage;
-
 
 
