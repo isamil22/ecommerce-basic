@@ -1,5 +1,3 @@
-// demo/src/main/java/com/example/demo/service/ProductService.java
-
 package com.example.demo.service;
 
 import com.example.demo.dto.ProductDTO;
@@ -50,6 +48,9 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + productDTO.getCategoryId()));
         product.setCategory(category);
 
+        // **FIX**: Manually set the type to ensure it's saved correctly.
+        product.setType(productDTO.getType());
+
         if (images != null && !images.isEmpty()) {
             List<String> imageUrls = uploadAndGetImageUrls(images);
             product.setImages(imageUrls);
@@ -73,6 +74,9 @@ public class ProductService {
         existingProduct.setBrand(productDTO.getBrand());
         existingProduct.setBestseller(productDTO.isBestseller());
         existingProduct.setNewArrival(productDTO.isNewArrival());
+
+        // **FIX**: Ensure the type is updated.
+        existingProduct.setType(productDTO.getType());
 
         if (!existingProduct.getCategory().getId().equals(productDTO.getCategoryId())) {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
@@ -112,6 +116,7 @@ public class ProductService {
      */
     @Transactional(readOnly = true)
     public Page<ProductDTO> getAllProducts(String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, String type, Pageable pageable) {
+        // **FIX**: Added the 'type' parameter to the specification query.
         Specification<Product> spec = productSpecification.getProducts(search, minPrice, maxPrice, brand, bestseller, newArrival, categoryId, type);
         return productRepository.findAll(spec, pageable)
                 .map(productMapper::toDTO);
