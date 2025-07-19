@@ -144,12 +144,15 @@ public class PackService {
         Product newDefaultProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
+        // Temporarily set the new default product to generate the image
         itemToUpdate.setDefaultProduct(newDefaultProduct);
 
+        // Generate the new composite image based on the temporary selection
         updatePackImage(pack);
 
-        Pack updatedPack = packRepository.save(pack);
-        return packMapper.toResponseDTO(updatedPack);
+        // IMPORTANT: DO NOT SAVE THE PACK ENTITY
+        // We return the DTO with the new image URL, but the original default product in the database remains unchanged.
+        return packMapper.toResponseDTO(pack);
     }
 
     private void updatePackImage(Pack pack) {
