@@ -2,7 +2,7 @@
 
 package com.example.demo.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference; // <-- IMPORT THIS
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,9 +37,9 @@ public class Product {
     private boolean newArrival;
 
     @Enumerated(EnumType.STRING)
-    private ProductType type; // Add this line
+    private ProductType type;
 
-    @JsonManagedReference // <-- ADD THIS ANNOTATION
+    @JsonManagedReference
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
@@ -47,7 +47,8 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    // ---MODIFICATION HERE---
     public enum ProductType {
-        MEN, WOMEN, PACK
+        MEN, WOMEN, BOTH
     }
 }

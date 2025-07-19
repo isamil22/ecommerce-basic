@@ -14,6 +14,7 @@ const AdminProductForm = () => {
         brand: '',
         bestseller: false,
         newArrival: false,
+        type: '', // Added type to the initial state
     });
     const [images, setImages] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -50,6 +51,7 @@ const AdminProductForm = () => {
                         brand: data.brand || '',
                         bestseller: data.bestseller || false,
                         newArrival: data.newArrival || false,
+                        type: data.type || '', // Make sure to fetch and set the type
                     });
                 } catch (err) {
                     setError(err.response?.data?.message || err.message);
@@ -158,7 +160,7 @@ const AdminProductForm = () => {
                     </div>
 
                     {/* Category */}
-                    <div className="md:col-span-2">
+                    <div>
                         <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">Category</label>
                         <select id="categoryId" name="categoryId" value={product.categoryId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
                             <option value="">-- Select a Category --</option>
@@ -167,6 +169,16 @@ const AdminProductForm = () => {
                                     {category.name}
                                 </option>
                             ))}
+                        </select>
+                    </div>
+                    {/* Product Type */}
+                    <div>
+                        <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
+                        <select id="type" name="type" value={product.type} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
+                            <option value="">-- Select Type --</option>
+                            <option value="MEN">Men</option>
+                            <option value="WOMEN">Women</option>
+                            <option value="BOTH">Both</option>
                         </select>
                     </div>
                 </div>
