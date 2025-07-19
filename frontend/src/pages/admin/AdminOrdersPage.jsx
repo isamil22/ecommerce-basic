@@ -7,11 +7,11 @@ const AdminOrdersPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(true);
+    const [expandedOrderId, setExpandedOrderId] = useState(null);
 
     const fetchOrders = async () => {
         try {
             const response = await getAllOrders();
-            // The fix is to use response.data, which contains the array of orders
             const ordersArray = Array.isArray(response.data) ? response.data : [];
             setOrders(ordersArray);
         } catch (err) {
@@ -39,6 +39,18 @@ const AdminOrdersPage = () => {
         }
     };
 
+    const toggleOrderDetails = (orderId) => {
+        setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    };
+
+    const calculateOrderTotal = (items) => {
+        if (!items || !Array.isArray(items)) {
+            return '0.00';
+        }
+        return items.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2);
+    };
+
+
     if (loading) {
         return <Loader />;
     }
@@ -54,32 +66,69 @@ const AdminOrdersPage = () => {
                     <tr>
                         <th className="py-2 px-4 border-b text-left">Order ID</th>
                         <th className="py-2 px-4 border-b text-left">Customer</th>
+                        <th className="py-2 px-4 border-b text-left">Total</th>
                         <th className="py-2 px-4 border-b text-left">Status</th>
-                        <th className="py-2 px-4 border-b text-left">Date</th>
+                        <th className="py-2 px-4 border-b text-left">Date & Time</th>
                         <th className="py-2 px-4 border-b text-left">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {orders.map(order => (
-                        <tr key={order.id}>
-                            <td className="py-2 px-4 border-b">{order.id}</td>
-                            {/* Assuming the user object is directly on the order */}
-                            <td className="py-2 px-4 border-b">{order.user ? order.user.username : 'N/A'}</td>
-                            <td className="py-2 px-4 border-b">{order.status}</td>
-                            <td className="py-2 px-4 border-b">{new Date(order.createdAt).toLocaleDateString()}</td>
-                            <td className="py-2 px-4 border-b">
-                                <select
-                                    defaultValue={order.status}
-                                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                    className="p-2 border rounded-md"
-                                >
-                                    <option value="PREPARING">Preparing</option>
-                                    <option value="DELIVERING">Delivering</option>
-                                    <option value="DELIVERED">Delivered</option>
-                                    <option value="CANCELED">Canceled</option>
-                                </select>
-                            </td>
-                        </tr>
+                        <React.Fragment key={order.id}>
+                            <tr className="hover:bg-gray-50">
+                                <td className="py-2 px-4 border-b">{order.id}</td>
+                                <td className="py-2 px-4 border-b">{order.clientFullName || 'N/A'}</td>
+                                <td className="py-2 px-4 border-b">${calculateOrderTotal(order.orderItems)}</td>
+                                <td className="py-2 px-4 border-b">{order.status}</td>
+                                <td className="py-2 px-4 border-b">{new Date(order.createdAt).toLocaleString()}</td>
+                                <td className="py-2 px-4 border-b">
+                                    <div className="flex items-center space-x-2">
+                                        <select
+                                            defaultValue={order.status}
+                                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                            className="p-2 border rounded-md"
+                                        >
+                                            <option value="PREPARING">Preparing</option>
+                                            <option value="DELIVERING">Delivering</option>
+                                            <option value="DELIVERED">Delivered</option>
+                                            <option value="CANCELED">Canceled</option>
+                                        </select>
+                                        <button
+                                            onClick={() => toggleOrderDetails(order.id)}
+                                            className="py-2 px-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                                        >
+                                            {expandedOrderId === order.id ? 'Hide' : 'Details'}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {expandedOrderId === order.id && (
+                                <tr>
+                                    <td colSpan="6" className="p-4 bg-gray-50 border-b">
+                                        <div className="p-4 bg-white rounded-md border">
+                                            <h4 className="font-bold text-lg mb-2">Order Details</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                <div>
+                                                    <p><strong>Full Name:</strong> {order.clientFullName}</p>
+                                                    <p><strong>Address:</strong> {order.address}</p>
+                                                    <p><strong>City:</strong> {order.city}</p>
+                                                    <p><strong>Phone:</strong> {order.phoneNumber}</p>
+                                                    <p><strong>Order Time:</strong> {new Date(order.createdAt).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                            <h5 className="font-semibold mt-4 mb-2">Items:</h5>
+                                            <ul className="list-disc list-inside space-y-1">
+                                                {order.orderItems.map(item => (
+                                                    <li key={item.id}>
+                                                        Product ID: {item.productId} - Quantity: {item.quantity} - Price: ${item.price.toFixed(2)}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </React.Fragment>
                     ))}
                     </tbody>
                 </table>
