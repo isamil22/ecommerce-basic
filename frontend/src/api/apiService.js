@@ -253,3 +253,9 @@ export const getDeletedOrders = () => {
 export const restoreOrder = (orderId) => {
     return apiService.post(`/orders/${orderId}/restore`);
 };
+
+export const exportOrders = () => {
+    return apiService.get('/orders/export', {
+        responseType: 'blob', // Important for file downloads
+    });
+};

@@ -1,3 +1,4 @@
+//isamil22/ecommerce-basic/ecommerce-basic-c83d487892bec1f57f16399098d19950a366e3c9/demo/src/main/java/com/example/demo/controller/OrderController.java
 package com.example.demo.controller;
 
 import com.example.demo.dto.OrderDTO;
@@ -5,6 +6,7 @@ import com.example.demo.model.Order;
 import com.example.demo.model.User;
 import com.example.demo.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -80,5 +82,15 @@ public class OrderController {
     public ResponseEntity<Void> deleteAllOrders() {
         orderService.deleteAllOrders();
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> exportOrders() {
+        String csv = orderService.exportOrdersToCsv();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"orders.csv\"")
+                .contentType(org.springframework.http.MediaType.TEXT_PLAIN)
+                .body(csv);
     }
 }

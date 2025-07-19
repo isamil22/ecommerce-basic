@@ -1,16 +1,18 @@
-// isamil22/ecommerce-basic/ecommerce-basic-d60fd8bd0a814edb150711f29c7c778b681eec90/frontend/src/pages/admin/AdminOrdersPage.jsx
+//isamil22/ecommerce-basic/ecommerce-basic-c83d487892bec1f57f16399098d19950a366e3c9/frontend/src/pages/admin/AdminOrdersPage.jsx
 import React, { useState, useEffect } from 'react';
 import {
     getAllOrders,
     deleteOrder,
     updateOrderStatus,
-    getDeletedOrders, // Import new function
-    restoreOrder      // Import new function
+    getDeletedOrders,
+    restoreOrder,
+    exportOrders // Import the new function
 } from '../../api/apiService';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const AdminOrdersPage = () => {
+    // ... (existing state and functions)
     const [orders, setOrders] = useState([]);
     const [deletedOrders, setDeletedOrders] = useState([]); // State for deleted orders
     const [loading, setLoading] = useState(true);
@@ -75,15 +77,38 @@ const AdminOrdersPage = () => {
             console.error(err);
         }
     };
+    const handleExport = async () => {
+        try {
+            const response = await exportOrders();
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'orders.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            toast.success('Orders exported successfully!');
+        } catch (err) {
+            toast.error('Failed to export orders.');
+            console.error(err);
+        }
+    };
 
     if (loading) return <p>Loading orders...</p>;
     if (error) return <p className="text-red-500">{error}</p>;
 
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Manage Orders</h1>
-
-            {/* Active Orders Table */}
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Manage Orders</h1>
+                <button
+                    onClick={handleExport}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                    Export Orders
+                </button>
+            </div>
+            {/* ... (rest of the component) ... */}
             <div className="bg-white shadow-md rounded-lg p-4 mb-8">
                 <h2 className="text-xl font-semibold mb-3">Active Orders</h2>
                 <div className="overflow-x-auto">
@@ -175,5 +200,4 @@ const AdminOrdersPage = () => {
         </div>
     );
 };
-
 export default AdminOrdersPage;

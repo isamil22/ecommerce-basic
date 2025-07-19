@@ -1,4 +1,4 @@
-//isamil22/ecommerce-basic/ecommerce-basic-84b68230fa5093db3372e926c83b8d7d7cb3ebc7/demo/src/main/java/com/example/demo/service/OrderService.java
+//isamil22/ecommerce-basic/ecommerce-basic-c83d487892bec1f57f16399098d19950a366e3c9/demo/src/main/java/com/example/demo/service/OrderService.java
 package com.example.demo.service;
 
 import com.example.demo.dto.CartDTO;
@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,5 +131,23 @@ public class OrderService {
 
     public void deleteAllOrders() {
         orderRepository.deleteAll();
+    }
+    public String exportOrdersToCsv() {
+        List<Order> orders = orderRepository.findByDeleted(false);
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        pw.println("Order ID,Customer Name,City,Address,Phone Number,Status,Created At");
+        for (Order order : orders) {
+            pw.println(String.join(",",
+                    String.valueOf(order.getId()),
+                    order.getClientFullName(),
+                    order.getCity(),
+                    order.getAddress(),
+                    order.getPhoneNumber(),
+                    String.valueOf(order.getStatus()),
+                    String.valueOf(order.getCreatedAt())
+            ));
+        }
+        return sw.toString();
     }
 }
