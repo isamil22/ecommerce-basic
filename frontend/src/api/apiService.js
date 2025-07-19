@@ -245,9 +245,11 @@ export const deleteAllOrders = () => {
     return apiService.delete('/orders/all');
 };
 
-// New functions for soft delete and restore
-export const softDeleteOrder = (orderId) => apiClient.delete(`/orders/${orderId}`);
-export const restoreOrder = (orderId) => apiClient.post(`/orders/${orderId}/restore`);
-export const getDeletedOrders = () => apiClient.get('/orders/deleted');
+// --- NEWLY ADDED FOR ORDER RESTORE ---
+export const getDeletedOrders = () => {
+    return apiService.get('/orders/deleted');
+};
 
-export default apiClient;
+export const restoreOrder = (orderId) => {
+    return apiService.post(`/orders/${orderId}/restore`);
+};
