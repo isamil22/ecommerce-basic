@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllOrders, updateOrderStatus } from '../../api/apiService';
+import { getAllOrders, updateOrderStatus, deleteOrder, deleteAllOrders } from '../../api/apiService';
 import Loader from '../../components/Loader';
 
 const AdminOrdersPage = () => {
@@ -39,6 +39,36 @@ const AdminOrdersPage = () => {
         }
     };
 
+    const handleDelete = async (orderId) => {
+        if (window.confirm(`Are you sure you want to delete order #${orderId}? This action cannot be undone.`)) {
+            setError('');
+            setSuccess('');
+            try {
+                await deleteOrder(orderId);
+                setSuccess(`Order #${orderId} has been deleted.`);
+                fetchOrders(); // Refresh list
+            } catch (err) {
+                setError(`Failed to delete order #${orderId}.`);
+                console.error(err);
+            }
+        }
+    };
+
+    const handleDeleteAll = async () => {
+        if (window.confirm('Are you sure you want to delete ALL orders? This action is irreversible.')) {
+            setError('');
+            setSuccess('');
+            try {
+                await deleteAllOrders();
+                setSuccess('All orders have been deleted successfully.');
+                fetchOrders(); // Refresh list, which will now be empty
+            } catch (err) {
+                setError('Failed to delete all orders.');
+                console.error(err);
+            }
+        }
+    };
+
     const toggleOrderDetails = (orderId) => {
         setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
     };
@@ -57,7 +87,15 @@ const AdminOrdersPage = () => {
 
     return (
         <div className="p-6">
-            <h1 className="text-3xl font-bold mb-6">Manage Orders</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Manage Orders</h1>
+                <button
+                    onClick={handleDeleteAll}
+                    className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700"
+                >
+                    Delete All Orders
+                </button>
+            </div>
             {error && <p className="text-red-500 bg-red-100 p-3 rounded-md mb-4">{error}</p>}
             {success && <p className="text-green-500 bg-green-100 p-3 rounded-md mb-4">{success}</p>}
             <div className="overflow-x-auto bg-white p-4 rounded-lg shadow">
@@ -98,6 +136,12 @@ const AdminOrdersPage = () => {
                                             className="py-2 px-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
                                         >
                                             {expandedOrderId === order.id ? 'Hide' : 'Details'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(order.id)}
+                                            className="py-2 px-3 bg-red-500 text-white rounded-md hover:bg-red-600"
+                                        >
+                                            Delete
                                         </button>
                                     </div>
                                 </td>

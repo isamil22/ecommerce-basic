@@ -236,3 +236,11 @@ export const createOrder = (orderData) => {
     params.append('phoneNumber', orderData.phoneNumber);
     return apiService.post(`/orders?${params.toString()}`);
 };
+
+export const deleteOrder = (orderId) => {
+    return apiService.delete(`/orders/${orderId}`);
+};
+
+export const deleteAllOrders = () => {
+    return apiService.delete('/orders/all');
+};

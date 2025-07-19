@@ -1,4 +1,3 @@
-// isamil22/ecommerce-basic/ecommerce-basic-71c6fa0046a0f3d47a9ee9dfa53fa2560484eb0f/demo/src/main/java/com/example/demo/controller/OrderController.java
 package com.example.demo.controller;
 
 import com.example.demo.dto.OrderDTO;
@@ -38,6 +37,7 @@ public class OrderController {
         List<OrderDTO> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
     }
+
     @GetMapping("/user")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<OrderDTO>> getUserOrders(@AuthenticationPrincipal UserDetails userDetails){
@@ -52,5 +52,19 @@ public class OrderController {
                                                       @RequestParam Order.OrderStatus status){
         OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
         return ResponseEntity.ok(updatedOrder);
+    }
+
+    @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long orderId) {
+        orderService.deleteOrder(orderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteAllOrders() {
+        orderService.deleteAllOrders();
+        return ResponseEntity.noContent().build();
     }
 }

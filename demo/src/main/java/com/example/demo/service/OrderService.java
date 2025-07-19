@@ -1,4 +1,3 @@
-// isamil22/ecommerce-basic/ecommerce-basic-71c6fa0046a0f3d47a9ee9dfa53fa2560484eb0f/demo/src/main/java/com/example/demo/service/OrderService.java
 package com.example.demo.service;
 
 import com.example.demo.dto.CartDTO;
@@ -37,7 +36,7 @@ public class OrderService {
     private final CartMapper cartMapper;
 
     @Transactional
-    public OrderDTO createOrder(Long userId, String address, String phoneNumber, String clientFullName, String city){ // MODIFIED
+    public OrderDTO createOrder(Long userId, String address, String phoneNumber, String clientFullName, String city){
         User user = userRepository.findById(userId)
                 .orElseThrow(()->new ResourceNotFoundException("User not found"));
         if(!user.isEmailConfirmation()){
@@ -52,8 +51,8 @@ public class OrderService {
 
         Order order = new Order();
         order.setUser(user);
-        order.setClientFullName(clientFullName); // ADDED
-        order.setCity(city); // ADDED
+        order.setClientFullName(clientFullName);
+        order.setCity(city);
         order.setAddress(address);
         order.setPhoneNumber(phoneNumber);
         order.setStatus(Order.OrderStatus.PREPARING);
@@ -105,5 +104,16 @@ public class OrderService {
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
         return orderMapper.toDTO(updatedOrder);
+    }
+
+    public void deleteOrder(Long orderId) {
+        if (!orderRepository.existsById(orderId)) {
+            throw new ResourceNotFoundException("Order not found with id: " + orderId);
+        }
+        orderRepository.deleteById(orderId);
+    }
+
+    public void deleteAllOrders() {
+        orderRepository.deleteAll();
     }
 }
