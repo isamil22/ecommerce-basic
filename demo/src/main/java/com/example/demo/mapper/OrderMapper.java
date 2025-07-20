@@ -36,7 +36,7 @@ public abstract class OrderMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "orderItems", source = "items")
     // Safely map the coupon code to the DTO, handling nulls
-    @Mapping(target = "couponCode", source = "coupon.code")
+    @Mapping(target = "couponCode", expression = "java(order.getCoupon() != null ? order.getCoupon().getCode() : null)")
     public abstract OrderDTO toDTO(Order order);
 
     @Mapping(target = "productId", source = "product.id")
