@@ -33,7 +33,12 @@ import AdminPacksPage from './pages/admin/AdminPacksPage.jsx';
 import PacksPage from "./pages/PacksPage.jsx";
 import PackDetailPage from "./pages/PackDetailPage.jsx";
 import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx';
-import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx'; // 1. Import the new page
+import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
+
+// --- NEW IMPORTS START ---
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+// --- NEW IMPORTS END ---
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -88,6 +93,18 @@ function App() {
         <BrowserRouter>
             <div className="flex flex-col min-h-screen">
                 <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={handleSetIsAuthenticated} userRole={userRole} cartCount={cartCount} />
+                {/* --- ADD TOAST CONTAINER HERE --- */}
+                <ToastContainer
+                    position="bottom-right"
+                    autoClose={5000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                />
                 <main className="flex-grow">
                     <Routes>
                         {/* --- Public Routes --- */}
@@ -129,9 +146,7 @@ function App() {
                             <Route path="packs" element={<AdminPacksPage />} />
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
-                            {/* --- NEW ROUTE START --- */}
                             <Route path="coupons" element={<AdminCouponsPage />} />
-                            {/* --- NEW ROUTE END --- */}
                         </Route>
                     </Routes>
                 </main>

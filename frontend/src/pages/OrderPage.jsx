@@ -9,8 +9,7 @@ const OrderPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
-    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeed
-    // --- NEW STATE FOR COUPONS ---
+
     const [couponCode, setCouponCode] = useState('');
     const [discount, setDiscount] = useState(0);
     const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -31,7 +30,8 @@ const OrderPage = () => {
                 const response = await getCart();
                 setCart(response.data);
             } catch (err) {
-                setError('Failed to fetch cart. Please try again.');
+                setError('Failed to fetch cart. Please login and try again.');
+                toast.error('Failed to fetch cart. Please login and try again.');
             }
         };
         fetchCart();
@@ -50,7 +50,6 @@ const OrderPage = () => {
             const response = await validateCoupon(couponCode);
             setDiscount(response.data.discountValue);
             setAppliedCoupon(response.data.code);
-            setError('');
             toast.success(`Coupon "${response.data.code}" applied successfully!`);
         } catch (err) {
             setDiscount(0);
@@ -72,12 +71,14 @@ const OrderPage = () => {
         try {
             await createOrder({ ...formData, couponCode: appliedCoupon });
             setSuccess('Order placed successfully! Redirecting to profile...');
+            toast.success('Order placed successfully!');
             setTimeout(() => {
                 navigate('/profile');
-            }, 2000);
+            }, 3000);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Failed to place order.';
             setError(errorMessage);
+            toast.error(errorMessage);
         }
     };
 
@@ -89,12 +90,13 @@ const OrderPage = () => {
     const subtotal = calculateSubtotal();
     const total = (subtotal - discount) > 0 ? (subtotal - discount) : 0;
 
-    if (error && !success) return <p className="text-red-500 text-center">{error}</p>;
-    if (!cart) return <p className="text-center">Loading your order details...</p>;
+    if (error && !success) return <p className="text-red-500 text-center p-4">{error}</p>;
+    if (!cart) return <p className="text-center p-4">Loading your order details...</p>;
 
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Confirm Your Order</h1>
+            {success && <p className="text-green-500 text-center mb-4">{success}</p>}
             {cart.items.length === 0 && !success ? (
                 <p className="text-center">Your cart is empty. Add items before placing an order.</p>
             ) : (
@@ -119,7 +121,7 @@ const OrderPage = () => {
                             {discount > 0 && (
                                 <div className="flex justify-between text-green-600">
                                     <span>Discount ({appliedCoupon})</span>
-                                    <span>-${discount.toFixed(2)}</span>
+                                    <span>-${parseFloat(discount).toFixed(2)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between items-center font-bold text-lg text-pink-500">
@@ -135,56 +137,23 @@ const OrderPage = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label htmlFor="clientFullName" className="block text-sm font-medium text-gray-700">Full Name</label>
-                                <input
-                                    type="text"
-                                    name="clientFullName"
-                                    id="clientFullName"
-                                    required
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                                    placeholder="Your Full Name"
-                                />
+                                <input type="text" name="clientFullName" id="clientFullName" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" placeholder="Your Full Name" />
                             </div>
                             <div className="mb-4">
                                 <label htmlFor="city" className="block text-sm font-medium text-gray-700">Ville (City)</label>
-                                <input
-                                    list="cities"
-                                    name="city"
-                                    id="city"
-                                    required
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                                    placeholder="Select or type your city"
-                                />
+                                <input list="cities" name="city" id="city" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" placeholder="Select or type your city" />
                                 <datalist id="cities">
                                     {moroccanCities.map(city => <option key={city} value={city} />)}
                                 </datalist>
                             </div>
                             <div className="mb-4">
                                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">Shipping Address</label>
-                                <input
-                                    type="text"
-                                    name="address"
-                                    id="address"
-                                    required
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                                    placeholder="123 Main St, Anytown"
-                                />
+                                <input type="text" name="address" id="address" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" placeholder="123 Main St, Anytown"/>
                             </div>
                             <div className="mb-6">
                                 <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input
-                                    type="tel"
-                                    name="phoneNumber"
-                                    id="phoneNumber"
-                                    required
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                                    placeholder="123-456-7890"
-                                />
+                                <input type="tel" name="phoneNumber" id="phoneNumber" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" placeholder="123-456-7890"/>
                             </div>
-                            {success && <p className="text-green-600 mb-4">{success}</p>}
                             <button
                                 type="submit"
                                 className="w-full bg-pink-600 text-white font-bold py-2 px-4 rounded-md hover:bg-pink-700 transition duration-300"
