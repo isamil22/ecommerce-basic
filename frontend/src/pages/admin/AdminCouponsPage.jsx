@@ -1,136 +1,178 @@
-// frontend/src/pages/admin/AdminCouponsPage.jsx
-
-import React, { useState, useEffect } from 'react';
-// Assuming you have these API functions
-import { createCoupon, getAllProducts, getAllCategories } from '../../api/apiService';
-import { toast } from 'react-toastify';
-import Select from 'react-select'; // You'll need to install this: npm install react-select
+import {
+    Button,
+    DatePicker,
+    Form,
+    Input,
+    InputNumber,
+    Select,
+    Table,
+    message,
+} from "antd";
+import { useEffect, useState } from "react";
+import { couponApi } from "../../api/coupon";
+import { productApi } from "../../api/product";
 
 const AdminCouponsPage = () => {
-    const [coupon, setCoupon] = useState({
-        code: '',
-        discountValue: '',
-        discountType: 'FIXED_AMOUNT',
-        expiryDate: '',
-        type: 'USER',
-        minPurchaseAmount: '',
-        usageLimit: '',
-        firstTimeOnly: false, // New state
-        applicableProductIds: [], // New state
-        applicableCategoryIds: [], // New state
-    });
-
+    const [form] = Form.useForm();
+    const [coupons, setCoupons] = useState([]);
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [isFreeShipping, setIsFreeShipping] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const productsRes = await getAllProducts();
-                setProducts(productsRes.data);
-                const categoriesRes = await getAllCategories();
-                setCategories(categoriesRes.data);
-            } catch (error) {
-                toast.error("Failed to load products or categories.");
-            }
-        };
-        fetchData();
+        getAllCoupons();
+        getAllProducts();
     }, []);
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        if (name === 'discountType') {
-            setIsFreeShipping(value === 'FREE_SHIPPING');
-        }
-        setCoupon({
-            ...coupon,
-            [name]: type === 'checkbox' ? checked : value
-        });
-    };
-
-    const handleMultiSelectChange = (options, field) => {
-        const ids = options ? options.map(option => option.value) : [];
-        setCoupon({ ...coupon, [field]: ids });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const getAllProducts = async () => {
         try {
-            // Your API call to create the coupon
-            await createCoupon(coupon);
-            toast.success('Coupon created successfully!');
-            // Reset form state here
-        } catch (err) {
-            toast.error('Failed to create coupon.');
+            setLoading(true);
+            const productsRes = await productApi.getAllProducts();
+            // FIX: Access the .content property from the paginated response
+            setProducts(productsRes.data.content || []);
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            message.error(error.response.data.message || "Something went wrong!");
         }
     };
 
-    const productOptions = products.map(p => ({ value: p.id, label: p.name }));
-    const categoryOptions = categories.map(c => ({ value: c.id, label: c.name }));
+    const getAllCoupons = async () => {
+        try {
+            setLoading(true);
+            const couponsRes = await couponApi.getAllCoupons();
+            setCoupons(couponsRes.data);
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            message.error(error.response.data.message || "Something went wrong!");
+        }
+    };
+
+    const onFinish = async (values) => {
+        try {
+            setLoading(true);
+            const res = await couponApi.createCoupon(values);
+            message.success(`Coupon ${res.data.name} created successfully!`);
+            getAllCoupons();
+            form.resetFields();
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            message.error(error.response.data.message || "Something went wrong!");
+        }
+    };
+
+    const columns = [
+        {
+            title: "Coupon Name",
+            dataIndex: "name",
+        },
+        {
+            title: "Coupon Code",
+            dataIndex: "code",
+        },
+        {
+            title: "Discount",
+            dataIndex: "discount",
+            render: (discount) => `${discount}%`,
+        },
+        {
+            title: "Expiration Date",
+            dataIndex: "expirationDate",
+            render: (date) => new Date(date).toLocaleDateString(),
+        },
+        {
+            title: "Action",
+            render: (text, record) => (
+                <Button type="primary" danger onClick={() => {}}>
+                    Delete
+                </Button>
+            ),
+        },
+    ];
 
     return (
-        <div className="container mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">Create New Coupon</h1>
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* ... other form fields for code, expiryDate, etc. ... */}
-
-                    <div>
-                        <label className="block text-sm font-medium">Discount Type</label>
-                        <select name="discountType" value={coupon.discountType} onChange={handleChange} className="mt-1 ...">
-                            <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
-                            <option value="PERCENTAGE">Percentage (%)</option>
-                            <option value="FREE_SHIPPING">Free Shipping</option>
-                        </select>
-                    </div>
-
-                    {!isFreeShipping && (
-                        <div>
-                            <label className="block text-sm font-medium">Discount Value</label>
-                            <input type="number" name="discountValue" value={coupon.discountValue} onChange={handleChange} className="mt-1 ..."/>
-                        </div>
-                    )}
-
-                    <div>
-                        <label className="block text-sm font-medium">Applicable Categories</label>
+        <div>
+            <h1 className="text-3xl font-semibold">Coupons</h1>
+            <div className="mt-5">
+                <Form layout="vertical" form={form} onFinish={onFinish}>
+                    <Form.Item
+                        label="Coupon Name"
+                        name="name"
+                        rules={[
+                            {
+                                required: true,
+                                message: "Please input coupon name!",
+                            },
+                        ]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        label="Coupon Code"
+                        name="code"
+                        rules={[
+                            {
+                                required: true,
+                                message: "Please input coupon code!",
+                            },
+                        ]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        label="Discount"
+                        name="discount"
+                        rules={[
+                            {
+                                required: true,
+                                message: "Please input discount!",
+                            },
+                        ]}
+                    >
+                        <InputNumber />
+                    </Form.Item>
+                    <Form.Item
+                        label="Expiration Date"
+                        name="expirationDate"
+                        rules={[
+                            {
+                                required: true,
+                                message: "Please input expiration date!",
+                            },
+                        ]}
+                    >
+                        <DatePicker />
+                    </Form.Item>
+                    <Form.Item label="Products" name="productIds">
                         <Select
-                            isMulti
-                            options={categoryOptions}
-                            onChange={(options) => handleMultiSelectChange(options, 'applicableCategoryIds')}
+                            mode="multiple"
+                            allowClear
+                            style={{
+                                width: "100%",
+                            }}
+                            placeholder="Please select"
+                            options={products.map((product) => ({
+                                label: product.name,
+                                value: product.id,
+                            }))}
                         />
-                        <p className="text-xs text-gray-500 mt-1">Leave empty to apply to all categories.</p>
-                    </div>
+                    </Form.Item>
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit" loading={loading}>
+                            Create Coupon
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium">Applicable Products</label>
-                        <Select
-                            isMulti
-                            options={productOptions}
-                            onChange={(options) => handleMultiSelectChange(options, 'applicableProductIds')}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Leave empty to apply to all products.</p>
-                    </div>
-
-
-                    <div className="flex items-center">
-                        <input
-                            id="firstTimeOnly"
-                            name="firstTimeOnly"
-                            type="checkbox"
-                            checked={coupon.firstTimeOnly}
-                            onChange={handleChange}
-                            className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="firstTimeOnly" className="ml-2 block text-sm text-gray-900">
-                            For First-Time Customers Only
-                        </label>
-                    </div>
-
-                    <button type="submit" className="w-full ... bg-pink-600 hover:bg-pink-700 ...">
-                        Create Coupon
-                    </button>
-                </form>
+            <div className="mt-5">
+                <Table
+                    columns={columns}
+                    dataSource={coupons}
+                    rowKey="id"
+                    loading={loading}
+                />
             </div>
         </div>
     );
