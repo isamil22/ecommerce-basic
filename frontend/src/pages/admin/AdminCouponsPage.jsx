@@ -9,8 +9,9 @@ import {
     message,
 } from "antd";
 import { useEffect, useState } from "react";
-import { couponApi } from "../../api/coupon";
-import { productApi } from "../../api/product";
+// Corrected: Import functions directly from apiService
+import { createCoupon, getAllProducts, getAllCoupons as fetchAllCoupons } from "../../api/apiService";
+
 
 const AdminCouponsPage = () => {
     const [form] = Form.useForm();
@@ -20,45 +21,47 @@ const AdminCouponsPage = () => {
 
     useEffect(() => {
         getAllCoupons();
-        getAllProducts();
+        fetchAllProducts();
     }, []);
 
-    const getAllProducts = async () => {
+    const fetchAllProducts = async () => {
         try {
             setLoading(true);
-            const productsRes = await productApi.getAllProducts();
-            // FIX: Access the .content property from the paginated response
+            // Corrected: Call the imported function directly
+            const productsRes = await getAllProducts();
             setProducts(productsRes.data.content || []);
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            message.error(error.response.data.message || "Something went wrong!");
+            message.error(error.response?.data?.message || "Something went wrong fetching products!");
         }
     };
 
     const getAllCoupons = async () => {
         try {
             setLoading(true);
-            const couponsRes = await couponApi.getAllCoupons();
+            // Corrected: Call the imported function directly (using the alias to avoid name conflict)
+            const couponsRes = await fetchAllCoupons();
             setCoupons(couponsRes.data);
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            message.error(error.response.data.message || "Something went wrong!");
+            message.error(error.response?.data?.message || "Something went wrong fetching coupons!");
         }
     };
 
     const onFinish = async (values) => {
         try {
             setLoading(true);
-            const res = await couponApi.createCoupon(values);
+            // Corrected: Call the imported function directly
+            const res = await createCoupon(values);
             message.success(`Coupon ${res.data.name} created successfully!`);
-            getAllCoupons();
+            getAllCoupons(); // Refresh the coupon list
             form.resetFields();
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            message.error(error.response.data.message || "Something went wrong!");
+            message.error(error.response?.data?.message || "Something went wrong creating the coupon!");
         }
     };
 
@@ -84,7 +87,7 @@ const AdminCouponsPage = () => {
         {
             title: "Action",
             render: (text, record) => (
-                <Button type="primary" danger onClick={() => {}}>
+                <Button type="primary" danger onClick={() => { /* Add delete logic here */ }}>
                     Delete
                 </Button>
             ),
@@ -130,7 +133,7 @@ const AdminCouponsPage = () => {
                             },
                         ]}
                     >
-                        <InputNumber />
+                        <InputNumber min={1} max={100} />
                     </Form.Item>
                     <Form.Item
                         label="Expiration Date"

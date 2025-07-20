@@ -262,4 +262,9 @@ export const validateCoupon = (code) => {
     return apiService.get(`/coupons/validate/${code}`);
 };
 
+// THIS IS THE NEW FUNCTION
+export const getAllCoupons = () => {
+    return apiService.get('/coupons');
+};
+
 // --- NEW COUPON FUNCTIONS END ---
