@@ -7,159 +7,143 @@ import {
     Select,
     Table,
     message,
+    Space,
+    Popconfirm,
+    Switch,
 } from "antd";
 import { useEffect, useState } from "react";
-// Corrected: Import functions directly from apiService
-import { createCoupon, getAllProducts, getAllCoupons as fetchAllCoupons } from "../../api/apiService";
+import { createCoupon, getAllCoupons as fetchAllCoupons, deleteCoupon } from "../../api/apiService";
+import dayjs from "dayjs";
 
+const { Option } = Select;
 
 const AdminCouponsPage = () => {
     const [form] = Form.useForm();
     const [coupons, setCoupons] = useState([]);
-    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         getAllCoupons();
-        fetchAllProducts();
     }, []);
-
-    const fetchAllProducts = async () => {
-        try {
-            setLoading(true);
-            // Corrected: Call the imported function directly
-            const productsRes = await getAllProducts();
-            setProducts(productsRes.data.content || []);
-            setLoading(false);
-        } catch (error) {
-            setLoading(false);
-            message.error(error.response?.data?.message || "Something went wrong fetching products!");
-        }
-    };
 
     const getAllCoupons = async () => {
         try {
             setLoading(true);
-            // Corrected: Call the imported function directly (using the alias to avoid name conflict)
             const couponsRes = await fetchAllCoupons();
             setCoupons(couponsRes.data);
-            setLoading(false);
         } catch (error) {
-            setLoading(false);
             message.error(error.response?.data?.message || "Something went wrong fetching coupons!");
+        } finally {
+            setLoading(false);
         }
     };
 
     const onFinish = async (values) => {
         try {
             setLoading(true);
-            // Corrected: Call the imported function directly
-            const res = await createCoupon(values);
-            message.success(`Coupon ${res.data.name} created successfully!`);
-            getAllCoupons(); // Refresh the coupon list
+            // Format date before sending
+            const payload = {
+                ...values,
+                expiryDate: values.expiryDate ? dayjs(values.expiryDate).toISOString() : null,
+            };
+            const res = await createCoupon(payload);
+            message.success(`Coupon "${res.data.name}" created successfully!`);
+            getAllCoupons();
             form.resetFields();
-            setLoading(false);
         } catch (error) {
-            setLoading(false);
             message.error(error.response?.data?.message || "Something went wrong creating the coupon!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (couponId) => {
+        try {
+            await deleteCoupon(couponId);
+            message.success("Coupon deleted successfully!");
+            getAllCoupons();
+        } catch (error) {
+            message.error("Failed to delete coupon.");
         }
     };
 
     const columns = [
-        {
-            title: "Coupon Name",
-            dataIndex: "name",
-        },
-        {
-            title: "Coupon Code",
-            dataIndex: "code",
-        },
+        { title: "ID", dataIndex: "id", key: "id", sorter: (a, b) => a.id - b.id },
+        { title: "Name", dataIndex: "name", key: "name" },
+        { title: "Code", dataIndex: "code", key: "code" },
         {
             title: "Discount",
-            dataIndex: "discount",
-            render: (discount) => `${discount}%`,
+            key: "discount",
+            render: (_, record) => {
+                if (record.discountType === 'PERCENTAGE') {
+                    return `${record.discountValue}%`;
+                }
+                if (record.discountType === 'FIXED_AMOUNT') {
+                    return `$${record.discountValue.toFixed(2)}`;
+                }
+                return 'Free Shipping';
+            },
         },
         {
-            title: "Expiration Date",
-            dataIndex: "expirationDate",
-            render: (date) => new Date(date).toLocaleDateString(),
+            title: "Expiry Date",
+            dataIndex: "expiryDate",
+            key: "expiryDate",
+            render: (date) => dayjs(date).format("YYYY-MM-DD"),
         },
+        { title: "Times Used", dataIndex: "timesUsed", key: "timesUsed" },
+        { title: "Usage Limit", dataIndex: "usageLimit", key: "usageLimit" },
         {
             title: "Action",
-            render: (text, record) => (
-                <Button type="primary" danger onClick={() => { /* Add delete logic here */ }}>
-                    Delete
-                </Button>
+            key: "action",
+            render: (_, record) => (
+                <Popconfirm
+                    title="Delete the coupon"
+                    description="Are you sure you want to delete this coupon?"
+                    onConfirm={() => handleDelete(record.id)}
+                    okText="Yes"
+                    cancelText="No"
+                >
+                    <Button type="primary" danger>
+                        Delete
+                    </Button>
+                </Popconfirm>
             ),
         },
     ];
 
     return (
-        <div>
-            <h1 className="text-3xl font-semibold">Coupons</h1>
-            <div className="mt-5">
+        <div className="p-6">
+            <h1 className="text-3xl font-bold mb-6">Manage Coupons</h1>
+            <div className="bg-white p-8 rounded-lg shadow-md mb-8">
+                <h2 className="text-xl font-semibold mb-4">Create New Coupon</h2>
                 <Form layout="vertical" form={form} onFinish={onFinish}>
-                    <Form.Item
-                        label="Coupon Name"
-                        name="name"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input coupon name!",
-                            },
-                        ]}
-                    >
-                        <Input />
+                    <Form.Item label="Coupon Name" name="name" rules={[{ required: true }]}>
+                        <Input placeholder="e.g., Summer Sale" />
                     </Form.Item>
-                    <Form.Item
-                        label="Coupon Code"
-                        name="code"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input coupon code!",
-                            },
-                        ]}
-                    >
-                        <Input />
+                    <Form.Item label="Coupon Code" name="code" rules={[{ required: true }]}>
+                        <Input placeholder="e.g., SUMMER25" />
                     </Form.Item>
-                    <Form.Item
-                        label="Discount"
-                        name="discount"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input discount!",
-                            },
-                        ]}
-                    >
-                        <InputNumber min={1} max={100} />
+                    <Form.Item label="Discount Type" name="discountType" rules={[{ required: true }]}>
+                        <Select placeholder="Select a discount type">
+                            <Option value="PERCENTAGE">Percentage</Option>
+                            <Option value="FIXED_AMOUNT">Fixed Amount</Option>
+                            <Option value="FREE_SHIPPING">Free Shipping</Option>
+                        </Select>
                     </Form.Item>
-                    <Form.Item
-                        label="Expiration Date"
-                        name="expirationDate"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input expiration date!",
-                            },
-                        ]}
-                    >
-                        <DatePicker />
+                    <Form.Item label="Discount Value" name="discountValue" rules={[{ required: true }]}>
+                        <InputNumber min={0} className="w-full" placeholder="e.g., 25 for 25% or 10 for $10" />
                     </Form.Item>
-                    <Form.Item label="Products" name="productIds">
-                        <Select
-                            mode="multiple"
-                            allowClear
-                            style={{
-                                width: "100%",
-                            }}
-                            placeholder="Please select"
-                            options={products.map((product) => ({
-                                label: product.name,
-                                value: product.id,
-                            }))}
-                        />
+                    <Form.Item label="Expiry Date" name="expiryDate" rules={[{ required: true }]}>
+                        <DatePicker className="w-full" />
+                    </Form.Item>
+                    <Form.Item label="Minimum Purchase Amount" name="minPurchaseAmount">
+                        <InputNumber min={0} className="w-full" placeholder="e.g., 50" />
+                    </Form.Item>
+                    <Form.Item label="Usage Limit" name="usageLimit" rules={[{ required: true }]}>
+                        <InputNumber min={0} className="w-full" placeholder="Total times this coupon can be used (0 for unlimited)" />
+                    </Form.Item>
+                    <Form.Item name="firstTimeOnly" label="For First-Time Customers Only" valuePropName="checked">
+                        <Switch />
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" htmlType="submit" loading={loading}>
@@ -168,13 +152,14 @@ const AdminCouponsPage = () => {
                     </Form.Item>
                 </Form>
             </div>
-
-            <div className="mt-5">
+            <div>
+                <h2 className="text-xl font-semibold mb-4">Existing Coupons</h2>
                 <Table
                     columns={columns}
                     dataSource={coupons}
                     rowKey="id"
                     loading={loading}
+                    scroll={{ x: true }}
                 />
             </div>
         </div>

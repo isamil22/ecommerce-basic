@@ -267,4 +267,7 @@ export const getAllCoupons = () => {
     return apiService.get('/coupons');
 };
 
+export const deleteCoupon = (id) => {
+    return apiService.delete(`/coupons/${id}`);
+};
 // --- NEW COUPON FUNCTIONS END ---

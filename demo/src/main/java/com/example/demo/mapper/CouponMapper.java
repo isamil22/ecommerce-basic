@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 public interface CouponMapper {
 
     @Mapping(target = "id", source = "id")
+    @Mapping(target = "name", source = "name")
     @Mapping(target = "code", source = "code")
     @Mapping(target = "discountValue", source = "discountValue")
     @Mapping(target = "discountType", source = "discountType")
@@ -20,5 +21,6 @@ public interface CouponMapper {
     @Mapping(target = "firstTimeOnly", source = "firstTimeOnly")
     CouponDTO toDTO(Coupon coupon);
 
+    @Mapping(target = "name", source = "name")
     Coupon toEntity(CouponDTO couponDTO);
 }

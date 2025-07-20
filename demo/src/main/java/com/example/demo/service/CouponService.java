@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List; // 👈 Import List
-import java.util.stream.Collectors; // 👈 Import Collectors
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +39,16 @@ public class CouponService {
         return couponMapper.toDTO(coupon);
     }
 
-    // 👇 ADD THIS METHOD
     public List<CouponDTO> getAllCoupons() {
         return couponRepository.findAll().stream()
                 .map(couponMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    public void deleteCoupon(Long id) {
+        if (!couponRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Coupon not found with id: " + id);
+        }
+        couponRepository.deleteById(id);
     }
 }

@@ -10,13 +10,14 @@ import java.time.LocalDateTime;
 @Data
 public class CouponDTO {
     private Long id;
+    private String name;
     private String code;
     private BigDecimal discountValue;
-    private Coupon.DiscountType discountType; // ADD THIS
+    private Coupon.DiscountType discountType;
     private LocalDateTime expiryDate;
     private Coupon.CouponType type;
-    private BigDecimal minPurchaseAmount; // ADD THIS
-    private int usageLimit; // ADD THIS
-    private int timesUsed; // ADD THIS
-    private boolean firstTimeOnly; // ADD THIS
+    private BigDecimal minPurchaseAmount;
+    private int usageLimit;
+    private int timesUsed;
+    private boolean firstTimeOnly;
 }
