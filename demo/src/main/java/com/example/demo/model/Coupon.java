@@ -1,5 +1,4 @@
 // demo/src/main/java/com/example/demo/model/Coupon.java
-
 package com.example.demo.model;
 
 import jakarta.persistence.*;
@@ -45,10 +44,10 @@ public class Coupon {
     private BigDecimal minPurchaseAmount;
 
     @Column
-    private int usageLimit;
+    private Integer usageLimit; // Changed from int to Integer
 
     @Column
-    private int timesUsed;
+    private Integer timesUsed; // Changed from int to Integer
 
     @Column(nullable = false)
     private boolean firstTimeOnly = false; // New: For first-time customer offers

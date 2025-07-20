@@ -1,3 +1,4 @@
+// demo/src/main/java/com/example/demo/service/CouponService.java
 package com.example.demo.service;
 
 import com.example.demo.dto.CouponDTO;
@@ -20,8 +21,13 @@ public class CouponService {
     private final CouponRepository couponRepository;
     private final CouponMapper couponMapper;
 
+    @Transactional
     public CouponDTO createCoupon(CouponDTO couponDTO) {
         Coupon coupon = couponMapper.toEntity(couponDTO);
+        // Ensure timesUsed is initialized for new coupons, as it's now an Integer
+        if (coupon.getTimesUsed() == null) {
+            coupon.setTimesUsed(0);
+        }
         // Additional validation can be added here if needed
         Coupon savedCoupon = couponRepository.save(coupon);
         return couponMapper.toDTO(savedCoupon);
@@ -38,7 +44,7 @@ public class CouponService {
         return couponMapper.toDTO(coupon);
     }
 
-    @Transactional(readOnly = true) // <-- Add this annotation
+    @Transactional(readOnly = true)
     public List<CouponDTO> getAllCoupons() {
         return couponRepository.findAll().stream()
                 .map(couponMapper::toDTO)
