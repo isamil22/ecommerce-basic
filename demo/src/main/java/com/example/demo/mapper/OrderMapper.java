@@ -4,6 +4,7 @@ import com.example.demo.dto.OrderDTO;
 import com.example.demo.dto.OrderItemDTO;
 import com.example.demo.model.Order;
 import com.example.demo.model.OrderItem;
+import com.example.demo.repositories.CouponRepository; // Import CouponRepository
 import com.example.demo.repositories.UserRepository;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -11,33 +12,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring") // Correct: No 'uses' attribute needed here
 public abstract class OrderMapper {
 
     @Autowired
     protected UserRepository userRepository;
 
-    // --- DTO to Entity Mappings ---
+    // --- INJECT CouponRepository ---
+    @Autowired
+    protected CouponRepository couponRepository;
 
-    // Use an expression to explicitly tell MapStruct how to get the User object
+    // --- DTO to Entity Mappings ---
     @Mapping(target = "user", expression = "java(userRepository.findById(orderDTO.getUserId()).orElse(null))")
     @Mapping(target = "items", source = "orderItems")
+    // --- NEW MAPPINGS START ---
+    @Mapping(target = "coupon", expression = "java(orderDTO.getCouponCode() != null ? couponRepository.findByCode(orderDTO.getCouponCode()).orElse(null) : null)")
+    // --- NEW MAPPINGS END ---
     public abstract Order toEntity(OrderDTO orderDTO);
 
     @Mapping(target = "product.id", source = "productId")
     @Mapping(target = "order", ignore = true)
     public abstract OrderItem toOrderItemEntity(OrderItemDTO orderItemDTO);
 
-
     // --- Entity to DTO Mappings ---
-
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "orderItems", source = "items")
+    // --- NEW MAPPING START ---
+    @Mapping(target = "couponCode", source = "coupon.code")
+    // --- NEW MAPPING END ---
     public abstract OrderDTO toDTO(Order order);
 
     @Mapping(target = "productId", source = "product.id")
     public abstract OrderItemDTO toOrderItemDTO(OrderItem orderItem);
-
 
     // --- List Mappings ---
     public abstract List<OrderDTO> toDTOs(List<Order> orders);

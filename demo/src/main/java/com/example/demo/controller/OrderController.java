@@ -1,12 +1,13 @@
-//isamil22/ecommerce-basic/ecommerce-basic-c83d487892bec1f57f16399098d19950a366e3c9/demo/src/main/java/com/example/demo/controller/OrderController.java
 package com.example.demo.controller;
 
 import com.example.demo.dto.OrderDTO;
 import com.example.demo.model.Order;
 import com.example.demo.model.User;
 import com.example.demo.service.OrderService;
+import com.example.demo.service.UserService; // Import UserService
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus; // Import HttpStatus
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
+    // --- ADD THIS LINE ---
+    private final UserService userService;
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -27,22 +30,25 @@ public class OrderController {
                                                 @RequestParam String clientFullName,
                                                 @RequestParam String city,
                                                 @RequestParam String address,
-                                                @RequestParam String phoneNumber){
+                                                @RequestParam String phoneNumber,
+                                                // --- ADD THIS LINE ---
+                                                @RequestParam(required = false) String couponCode) {
         Long userId = ((User) userDetails).getId();
-        OrderDTO orderDTO = orderService.createOrder(userId, address, phoneNumber, clientFullName, city);
+        // --- PASS THE NEW PARAMETER TO THE SERVICE ---
+        OrderDTO orderDTO = orderService.createOrder(userId, address, phoneNumber, clientFullName, city, couponCode);
         return ResponseEntity.ok(orderDTO);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<OrderDTO>> getAllOrders(){
+    public ResponseEntity<List<OrderDTO>> getAllOrders() {
         List<OrderDTO> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/user")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<OrderDTO>> getUserOrders(@AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<List<OrderDTO>> getUserOrders(@AuthenticationPrincipal UserDetails userDetails) {
         Long userId = ((User) userDetails).getId();
         List<OrderDTO> orders = orderService.getUserOrders(userId);
         return ResponseEntity.ok(orders);
@@ -51,7 +57,7 @@ public class OrderController {
     @PutMapping("/{orderId}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long orderId,
-                                                      @RequestParam Order.OrderStatus status){
+                                                      @RequestParam Order.OrderStatus status) {
         OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
         return ResponseEntity.ok(updatedOrder);
     }
