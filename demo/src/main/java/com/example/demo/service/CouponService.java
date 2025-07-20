@@ -8,7 +8,7 @@ import com.example.demo.model.Coupon;
 import com.example.demo.repositories.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Add this import
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +27,11 @@ public class CouponService {
         // Ensure timesUsed is initialized for new coupons, as it's now an Integer
         if (coupon.getTimesUsed() == null) {
             coupon.setTimesUsed(0);
+        }
+        // Set a default coupon type if not provided from DTO
+        // You might need to adjust 'Coupon.CouponType.USER' based on your application's default logic
+        if (coupon.getType() == null) {
+            coupon.setType(Coupon.CouponType.USER); // Added these lines
         }
         // Additional validation can be added here if needed
         Coupon savedCoupon = couponRepository.save(coupon);

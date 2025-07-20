@@ -15,9 +15,9 @@ public class CouponDTO {
     private BigDecimal discountValue;
     private Coupon.DiscountType discountType;
     private LocalDateTime expiryDate;
-    private Coupon.CouponType type;
+    private Coupon.CouponType type; // Added this line
     private BigDecimal minPurchaseAmount;
-    private Integer usageLimit; // Changed from int to Integer
-    private Integer timesUsed; // Changed from int to Integer
+    private Integer usageLimit;
+    private Integer timesUsed;
     private boolean firstTimeOnly;
 }
