@@ -193,13 +193,7 @@ export const uploadDescriptionImage = (formData) => {
 
 export const createPack = (formData) => apiService.post('/packs', formData);
 
-/**
- * NEW: Updates an existing pack.
- * The packData should be a FormData object, similar to createPack.
- */
 export const updatePack = (id, formData) => {
-    // Note: The backend expects 'multipart/form-data' if you allow image updates.
-    // If not, you can send as 'application/json'. We'll assume you might update the image too.
     return apiService.put(`/packs/${id}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -215,9 +209,6 @@ export const getPackById = (id) => {
     return apiService.get(`/packs/${id}`);
 };
 
-/**
- * NEW: Updates the default product for a specific item in a pack.
- */
 export const updateDefaultProductForPack = (packId, itemId, productId) => {
     return apiService.put(`/packs/${packId}/items/${itemId}/default-product`, { productId });
 };
@@ -226,14 +217,16 @@ export const deletePack = (id) => {
     return apiService.delete(`/packs/${id}`);
 };
 
-
 export const createOrder = (orderData) => {
-    // Using URLSearchParams to build the query string correctly
     const params = new URLSearchParams();
     params.append('clientFullName', orderData.clientFullName);
     params.append('city', orderData.city);
     params.append('address', orderData.address);
     params.append('phoneNumber', orderData.phoneNumber);
+    // Add couponCode to params if it exists
+    if (orderData.couponCode) {
+        params.append('couponCode', orderData.couponCode);
+    }
     return apiService.post(`/orders?${params.toString()}`);
 };
 
@@ -245,7 +238,6 @@ export const deleteAllOrders = () => {
     return apiService.delete('/orders/all');
 };
 
-// --- NEWLY ADDED FOR ORDER RESTORE ---
 export const getDeletedOrders = () => {
     return apiService.get('/orders/deleted');
 };
@@ -256,6 +248,18 @@ export const restoreOrder = (orderId) => {
 
 export const exportOrders = () => {
     return apiService.get('/orders/export', {
-        responseType: 'blob', // Important for file downloads
+        responseType: 'blob',
     });
 };
+
+// --- NEW COUPON FUNCTIONS START ---
+
+export const createCoupon = (couponData) => {
+    return apiService.post('/coupons', couponData);
+};
+
+export const validateCoupon = (code) => {
+    return apiService.get(`/coupons/validate/${code}`);
+};
+
+// --- NEW COUPON FUNCTIONS END ---

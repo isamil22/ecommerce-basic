@@ -1,7 +1,7 @@
-// isamil22/ecommerce-basic/ecommerce-basic-71c6fa0046a0f3d47a9ee9dfa53fa2560484eb0f/frontend/src/pages/OrderPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, createOrder } from '../api/apiService';
+import { getCart, createOrder, validateCoupon } from '../api/apiService';
+import { toast } from 'react-toastify';
 
 const OrderPage = () => {
     const [cart, setCart] = useState(null);
@@ -9,6 +9,11 @@ const OrderPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
+
+    // --- NEW STATE FOR COUPONS ---
+    const [couponCode, setCouponCode] = useState('');
+    const [discount, setDiscount] = useState(0);
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
 
     const moroccanCities = [
         "Agadir", "Al Hoceima", "Assilah", "Azemmour", "Beni Mellal", "Boujdour",
@@ -36,6 +41,24 @@ const OrderPage = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleApplyCoupon = async () => {
+        if (!couponCode) {
+            toast.warn('Please enter a coupon code.');
+            return;
+        }
+        try {
+            const response = await validateCoupon(couponCode);
+            setDiscount(response.data.discountValue);
+            setAppliedCoupon(response.data.code);
+            setError('');
+            toast.success(`Coupon "${response.data.code}" applied successfully!`);
+        } catch (err) {
+            setDiscount(0);
+            setAppliedCoupon(null);
+            toast.error('Invalid or expired coupon code.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -47,7 +70,7 @@ const OrderPage = () => {
         }
 
         try {
-            await createOrder(formData);
+            await createOrder({ ...formData, couponCode: appliedCoupon });
             setSuccess('Order placed successfully! Redirecting to profile...');
             setTimeout(() => {
                 navigate('/profile');
@@ -58,12 +81,15 @@ const OrderPage = () => {
         }
     };
 
-    const calculateTotal = () => {
-        if (!cart || !cart.items) return '0.00';
-        return cart.items.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2);
+    const calculateSubtotal = () => {
+        if (!cart || !cart.items) return 0;
+        return cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
 
-    if (error) return <p className="text-red-500 text-center">{error}</p>;
+    const subtotal = calculateSubtotal();
+    const total = (subtotal - discount) > 0 ? (subtotal - discount) : 0;
+
+    if (error && !success) return <p className="text-red-500 text-center">{error}</p>;
     if (!cart) return <p className="text-center">Loading your order details...</p>;
 
     return (
@@ -82,9 +108,24 @@ const OrderPage = () => {
                                 <span className="text-gray-800 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                             </div>
                         ))}
-                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                            <span className="font-bold text-lg">Total</span>
-                            <span className="font-bold text-lg text-pink-500">${calculateTotal()}</span>
+                        <div className="mt-4 pt-4 border-t">
+                            <div className="flex items-center space-x-2">
+                                <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder="Coupon Code" className="p-2 border rounded w-full"/>
+                                <button onClick={handleApplyCoupon} type="button" className="bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300">Apply</button>
+                            </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t space-y-2">
+                            <div className="flex justify-between"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
+                            {discount > 0 && (
+                                <div className="flex justify-between text-green-600">
+                                    <span>Discount ({appliedCoupon})</span>
+                                    <span>-${discount.toFixed(2)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center font-bold text-lg text-pink-500">
+                                <span>Total</span>
+                                <span>${total.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
 
