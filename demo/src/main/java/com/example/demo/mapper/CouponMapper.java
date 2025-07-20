@@ -8,6 +8,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface CouponMapper {
 
+    /**
+     * Correctly maps a Coupon entity to a CouponDTO for sending to the frontend.
+     * This is the fix for the 500 error on the GET request.
+     */
     @Mapping(target = "id", source = "id")
     @Mapping(target = "name", source = "name")
     @Mapping(target = "code", source = "code")
@@ -21,6 +25,12 @@ public interface CouponMapper {
     @Mapping(target = "firstTimeOnly", source = "firstTimeOnly")
     CouponDTO toDTO(Coupon coupon);
 
-    @Mapping(target = "name", source = "name")
+    /**
+     * Correctly maps a CouponDTO from the frontend to a Coupon entity for saving.
+     */
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "timesUsed", ignore = true)
+    @Mapping(target = "applicableProducts", ignore = true)
+    @Mapping(target = "applicableCategories", ignore = true)
     Coupon toEntity(CouponDTO couponDTO);
 }
