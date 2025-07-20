@@ -1,22 +1,25 @@
+// demo/src/main/java/com/example/demo/model/Order.java
+
 package com.example.demo.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.example.demo.model.User;
+import lombok.AllArgsConstructor;
 
-import java.math.BigDecimal; // Import BigDecimal
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name="orders")
+@Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,10 +36,6 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    public enum OrderStatus {
-        PREPARING, DELIVERING, DELIVERED, CANCELED
-    }
-
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -44,13 +43,16 @@ public class Order {
 
     private boolean deleted = false;
 
-    // --- NEW FIELDS START ---
-
     private BigDecimal discountAmount;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
 
-    // --- NEW FIELDS END ---
+    // New field for shipping cost
+    private BigDecimal shippingCost;
+
+    public enum OrderStatus {
+        PREPARING, DELIVERING, DELIVERED, CANCELED
+    }
 }
