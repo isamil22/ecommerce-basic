@@ -1,4 +1,3 @@
-//isamil22/ecommerce-basic/ecommerce-basic-c83d487892bec1f57f16399098d19950a366e3c9/demo/src/main/java/com/example/demo/service/OrderService.java
 package com.example.demo.service;
 
 import com.example.demo.dto.CartDTO;
@@ -8,6 +7,7 @@ import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.mapper.CartMapper;
 import com.example.demo.mapper.OrderMapper;
 import com.example.demo.model.*;
+import com.example.demo.repositories.CouponRepository; // Import CouponRepository
 import com.example.demo.repositories.OrderRepository;
 import com.example.demo.repositories.ProductRepository;
 import com.example.demo.repositories.UserRepository;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal; // Import BigDecimal
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,18 +38,19 @@ public class OrderService {
     private final EmailService emailService;
     private final OrderMapper orderMapper;
     private final CartMapper cartMapper;
+    private final CouponRepository couponRepository; // Inject CouponRepository
 
     @Transactional
-    public OrderDTO createOrder(Long userId, String address, String phoneNumber, String clientFullName, String city){
+    public OrderDTO createOrder(Long userId, String address, String phoneNumber, String clientFullName, String city, String couponCode) { // Add couponCode parameter
         User user = userRepository.findById(userId)
-                .orElseThrow(()->new ResourceNotFoundException("User not found"));
-        if(!user.isEmailConfirmation()){
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!user.isEmailConfirmation()) {
             throw new IllegalStateException("Email not confirmed. Please confirm email before placing order");
         }
         CartDTO cartDTO = cartService.getCart(userId);
         Cart cart = cartMapper.toEntity(cartDTO);
 
-        if(cart.getItems().isEmpty()){
+        if (cart.getItems().isEmpty()) {
             throw new IllegalStateException("Cannot create an order with an empty cart");
         }
 
@@ -61,30 +63,45 @@ public class OrderService {
         order.setStatus(Order.OrderStatus.PREPARING);
         order.setCreatedAt(LocalDateTime.now());
 
+        // ===== Apply Coupon Logic =====
+        if (couponCode != null && !couponCode.trim().isEmpty()) {
+            Coupon coupon = couponRepository.findByCode(couponCode)
+                    .orElseThrow(() -> new ResourceNotFoundException("Coupon not found"));
+
+            if (coupon.getExpiryDate().isBefore(LocalDateTime.now())) {
+                throw new IllegalStateException("Coupon has expired");
+            }
+            order.setCoupon(coupon);
+            order.setDiscountAmount(coupon.getDiscountValue());
+        } else {
+            order.setDiscountAmount(BigDecimal.ZERO);
+        }
+        // ============================
+
         List<OrderItem> orderItems = createOrderItems(cart, order);
         order.setItems(orderItems);
 
         Order savedOrder = orderRepository.save(order);
         cartService.clearCart(userId);
 
-        try{
+        try {
             emailService.sendOrderConfirmation(savedOrder);
-        }catch (MailException e){
-            logger.error("Failed to send order confirmation email for order ID "+savedOrder.getId(), e);
+        } catch (MailException e) {
+            logger.error("Failed to send order confirmation email for order ID " + savedOrder.getId(), e);
         }
         return orderMapper.toDTO(savedOrder);
     }
 
-    private List<OrderItem> createOrderItems(Cart cart, Order order){
+    private List<OrderItem> createOrderItems(Cart cart, Order order) {
         return cart.getItems().stream().map(cartItem -> {
             Product product = productRepository.findById(cartItem.getProduct().getId())
-                    .orElseThrow(()-> new EntityNotFoundException("Product not found with id: "+cartItem.getProduct().getId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + cartItem.getProduct().getId()));
 
-            if(product.getQuantity() == null){
-                throw new IllegalStateException("Product quantity is not set for product "+product.getName());
+            if (product.getQuantity() == null) {
+                throw new IllegalStateException("Product quantity is not set for product " + product.getName());
             }
-            if(product.getQuantity() < cartItem.getQuantity()){
-                throw new InsufficientStockException("Not enough stock for product "+product.getName());
+            if (product.getQuantity() < cartItem.getQuantity()) {
+                throw new InsufficientStockException("Not enough stock for product " + product.getName());
             }
             product.setQuantity(product.getQuantity() - cartItem.getQuantity());
             productRepository.save(product);
@@ -93,17 +110,17 @@ public class OrderService {
         }).collect(Collectors.toList());
     }
 
-    public List<OrderDTO> getAllOrders(){
+    public List<OrderDTO> getAllOrders() {
         return orderMapper.toDTOs(orderRepository.findByDeleted(false));
     }
 
-    public List<OrderDTO> getUserOrders(Long userId){
+    public List<OrderDTO> getUserOrders(Long userId) {
         return orderMapper.toDTOs(orderRepository.findByUserId(userId));
     }
 
-    public OrderDTO updateOrderStatus(Long orderId,Order.OrderStatus status){
+    public OrderDTO updateOrderStatus(Long orderId, Order.OrderStatus status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(()->new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
         return orderMapper.toDTO(updatedOrder);
@@ -132,6 +149,7 @@ public class OrderService {
     public void deleteAllOrders() {
         orderRepository.deleteAll();
     }
+
     public String exportOrdersToCsv() {
         List<Order> orders = orderRepository.findByDeleted(false);
         StringWriter sw = new StringWriter();

@@ -1,13 +1,12 @@
-// isamil22/ecommerce-basic/ecommerce-basic-d60fd8bd0a814edb150711f29c7c778b681eec90/demo/src/main/java/com/example/demo/model/Order.java
 package com.example.demo.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-// import org.apache.catalina.User; // REMOVE THIS LINE
-import com.example.demo.model.User; // ADD THIS LINE
+import com.example.demo.model.User;
 
+import java.math.BigDecimal; // Import BigDecimal
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +23,10 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // This will now correctly refer to your User entity
+    private User user;
 
-    private String clientFullName; // ADDED
-    private String city; // ADDED
+    private String clientFullName;
+    private String city;
     private String address;
     private String phoneNumber;
 
@@ -44,4 +43,14 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
 
     private boolean deleted = false;
+
+    // --- NEW FIELDS START ---
+
+    private BigDecimal discountAmount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
+
+    // --- NEW FIELDS END ---
 }
