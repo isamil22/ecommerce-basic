@@ -10,7 +10,8 @@ public interface CouponMapper {
 
     /**
      * Correctly maps a Coupon entity to a CouponDTO for sending to the frontend.
-     * This is the fix for the 500 error on the GET request.
+     * The 'applicableProducts' and 'applicableCategories' fields are automatically
+     * ignored because they do not exist in the CouponDTO.
      */
     @Mapping(target = "id", source = "id")
     @Mapping(target = "name", source = "name")
