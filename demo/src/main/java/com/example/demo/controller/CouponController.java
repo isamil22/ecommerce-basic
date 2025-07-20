@@ -1,3 +1,5 @@
+// isamil22/ecommerce-basic/ecommerce-basic-0f55bfa61258d154774d02769dfa0c05f3c7e830/demo/src/main/java/com/example/demo/controller/CouponController.java
+
 package com.example.demo.controller;
 
 import com.example.demo.dto.CouponDTO;
@@ -7,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List; // 👈 Import List
 
 @RestController
 @RequestMapping("/api/coupons")
@@ -30,5 +34,13 @@ public class CouponController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null); // Or a custom error response
         }
+    }
+
+    // 👇 ADD THIS ENDPOINT
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CouponDTO>> getAllCoupons() {
+        List<CouponDTO> coupons = couponService.getAllCoupons();
+        return ResponseEntity.ok(coupons);
     }
 }

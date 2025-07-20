@@ -1,3 +1,5 @@
+// isamil22/ecommerce-basic/ecommerce-basic-0f55bfa61258d154774d02769dfa0c05f3c7e830/demo/src/main/java/com/example/demo/service/CouponService.java
+
 package com.example.demo.service;
 
 import com.example.demo.dto.CouponDTO;
@@ -9,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List; // 👈 Import List
+import java.util.stream.Collectors; // 👈 Import Collectors
 
 @Service
 @RequiredArgsConstructor
@@ -33,5 +37,12 @@ public class CouponService {
         }
 
         return couponMapper.toDTO(coupon);
+    }
+
+    // 👇 ADD THIS METHOD
+    public List<CouponDTO> getAllCoupons() {
+        return couponRepository.findAll().stream()
+                .map(couponMapper::toDTO)
+                .collect(Collectors.toList());
     }
 }
