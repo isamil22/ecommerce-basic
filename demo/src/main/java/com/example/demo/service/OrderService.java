@@ -1,5 +1,3 @@
-// demo/src/main/java/com/example/demo/service/OrderService.java
-
 package com.example.demo.service;
 
 import com.example.demo.dto.CartDTO;
@@ -14,12 +12,12 @@ import com.example.demo.repositories.OrderRepository;
 import com.example.demo.repositories.ProductRepository;
 import com.example.demo.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Add this import
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -199,6 +197,7 @@ public class OrderService {
     }
 
 
+    @Transactional(readOnly = true) // <-- Add this annotation
     public List<OrderDTO> getAllOrders() {
         return orderMapper.toDTOs(orderRepository.findByDeleted(false));
     }
