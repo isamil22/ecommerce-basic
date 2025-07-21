@@ -55,6 +55,16 @@ public class OrderService {
             throw new IllegalStateException("Cannot create an order with an empty cart");
         }
 
+        // ======================= FIX START =======================
+        // The cart object from the mapper has products with only an ID.
+        // We need to load the full product details for each cart item.
+        for (CartItem item : cart.getItems()) {
+            Product fullProduct = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found in cart with ID: " + item.getProduct().getId()));
+            item.setProduct(fullProduct);
+        }
+        // ======================== FIX END ========================
+
         Order order = new Order();
         order.setUser(user);
         order.setClientFullName(clientFullName);
