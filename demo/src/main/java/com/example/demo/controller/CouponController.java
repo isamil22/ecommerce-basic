@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/coupons")
@@ -48,5 +49,11 @@ public class CouponController {
     public ResponseEntity<Void> deleteCoupon(@PathVariable Long id) {
         couponService.deleteCoupon(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/usage-statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getCouponUsageStatistics() {
+        return ResponseEntity.ok(couponService.getCouponUsageStatistics());
     }
 }

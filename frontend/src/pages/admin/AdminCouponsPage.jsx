@@ -13,8 +13,9 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 // Import getAllProducts and getAllCategories from apiService
-import { createCoupon, getAllCoupons as fetchAllCoupons, deleteCoupon, getAllProducts, getAllCategories } from "../../api/apiService"; //
+import { createCoupon, getAllCoupons as fetchAllCoupons, deleteCoupon, getAllProducts, getAllCategories, getCouponUsageStatistics } from "../../api/apiService"; //
 import dayjs from "dayjs";
+import { Line } from '@ant-design/plots';
 
 const { Option } = Select;
 
@@ -24,11 +25,24 @@ const AdminCouponsPage = () => {
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState([]); // State for products
     const [categories, setCategories] = useState([]); // State for categories
+    const [usageData, setUsageData] = useState([]);
 
     useEffect(() => {
         getAllCoupons();
         fetchProductsAndCategories(); // Fetch products and categories when component mounts
+        fetchUsageData();
     }, []);
+
+    const fetchUsageData = async () => {
+        try {
+            const res = await getCouponUsageStatistics();
+            setUsageData(res.data.map(d => ({ ...d, date: dayjs(d.date).format('YYYY-MM-DD') })));
+        } catch (error) {
+            message.error("Failed to fetch coupon usage data.");
+            console.error("Error fetching usage data:", error);
+        }
+    };
+
 
     const fetchProductsAndCategories = async () => {
         try {
@@ -148,10 +162,23 @@ const AdminCouponsPage = () => {
             ),
         },
     ];
+    const chartConfig = {
+        data: usageData,
+        xField: 'date',
+        yField: 'count',
+        xAxis: {
+            tickCount: 5,
+        },
+        smooth: true,
+    };
 
     return (
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Manage Coupons</h1>
+            <div className="bg-white p-8 rounded-lg shadow-md mb-8">
+                <h2 className="text-xl font-semibold mb-4">Daily Coupon Usage</h2>
+                <Line {...chartConfig} />
+            </div>
             <div className="bg-white p-8 rounded-lg shadow-md mb-8">
                 <h2 className="text-xl font-semibold mb-4">Create New Coupon</h2>
                 <Form layout="vertical" form={form} onFinish={onFinish}>

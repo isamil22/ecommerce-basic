@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set; // Import Set
 import java.util.stream.Collectors;
 
@@ -73,5 +74,9 @@ public class CouponService {
         }
 
         couponRepository.deleteById(id); // Now delete the coupon
+    }
+
+    public List<Map<String, Object>> getCouponUsageStatistics() {
+        return orderRepository.countByCouponUsageByDay();
     }
 }

@@ -270,4 +270,8 @@ export const getAllCoupons = () => {
 export const deleteCoupon = (id) => {
     return apiService.delete(`/coupons/${id}`);
 };
+
+export const getCouponUsageStatistics = () => {
+    return apiService.get('/coupons/usage-statistics');
+};
 // --- NEW COUPON FUNCTIONS END ---

@@ -5,9 +5,11 @@ import com.example.demo.model.Order;
 import com.example.demo.model.User;
 import com.example.demo.model.Coupon;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -29,4 +31,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // This will allow finding orders based on their 'deleted' status.
     List<Order> findByDeleted(boolean deleted);
+
+    @Query("SELECT FUNCTION('DATE', o.createdAt) as date, COUNT(o) as count FROM Order o WHERE o.coupon IS NOT NULL GROUP BY FUNCTION('DATE', o.createdAt)")
+    List<Map<String, Object>> countByCouponUsageByDay();
 }
