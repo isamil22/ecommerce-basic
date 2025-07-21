@@ -34,11 +34,21 @@ import PacksPage from "./pages/PacksPage.jsx";
 import PackDetailPage from "./pages/PackDetailPage.jsx";
 import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
-
-// --- NEW IMPORTS START ---
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-// --- NEW IMPORTS END ---
+
+// --- GOOGLE ANALYTICS IMPORTS AND INITIALIZATION START ---
+import ReactGA from 'react-ga4';
+import AnalyticsTracker from './components/AnalyticsTracker.jsx';
+
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+if (GA_MEASUREMENT_ID) {
+    ReactGA.initialize(GA_MEASUREMENT_ID, {
+        testMode: import.meta.env.DEV // Enable test mode on localhost
+    });
+}
+// --- GOOGLE ANALYTICS IMPORTS AND INITIALIZATION END ---
+
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,9 +101,9 @@ function App() {
 
     return (
         <BrowserRouter>
+            <AnalyticsTracker /> {/* --- ADD ANALYTICS TRACKER HERE --- */}
             <div className="flex flex-col min-h-screen">
                 <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={handleSetIsAuthenticated} userRole={userRole} cartCount={cartCount} />
-                {/* --- ADD TOAST CONTAINER HERE --- */}
                 <ToastContainer
                     position="bottom-right"
                     autoClose={5000}
