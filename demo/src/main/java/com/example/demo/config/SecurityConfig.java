@@ -48,14 +48,17 @@ public class SecurityConfig {
                                 "/api/auth/confirm-email",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
-                                "/api/test-post") // <-- ADD THIS LINE to permit the new test endpoint
+                                "/api/test-post")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/products/**",
                                 "/api/categories/**",
-                                "/api/reviews/approved",
+                                "/api/reviews/**", // Updated for broader access
+                                "/api/packs/**",   // Added for packs
                                 "/api/hero",
-                                "/api/comments/product/**")
+                                "/api/comments/product/**",
+                                "/api/settings"    // Added for settings
+                        )
                         .permitAll()
                         .requestMatchers("/", "/index.html", "/images/**", "/vite.svg").permitAll()
                         .anyRequest().authenticated()
