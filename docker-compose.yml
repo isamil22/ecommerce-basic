@@ -46,6 +46,10 @@ services:
       - '8081:80'
     depends_on:
       - backend
+    # --- ADD THIS SECTION ---
+    env_file:
+      - ./frontend/.env
+    # -----------------------
     networks:
       - my-network
 
