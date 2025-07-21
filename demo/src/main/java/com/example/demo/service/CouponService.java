@@ -1,4 +1,4 @@
-// demo/src/main/java/com/example/demo/service/CouponService.java
+// isamil22/ecommerce-basic/ecommerce-basic-de52fb3f9923420c0ceb538f0eea6ad24aa94a25/demo/src/main/java/com/example/demo/service/CouponService.java
 package com.example.demo.service;
 
 import com.example.demo.dto.CouponDTO;
@@ -29,16 +29,12 @@ public class CouponService {
     @Transactional
     public CouponDTO createCoupon(CouponDTO couponDTO) {
         Coupon coupon = couponMapper.toEntity(couponDTO);
-        // Ensure timesUsed is initialized for new coupons, as it's now an Integer
         if (coupon.getTimesUsed() == null) {
             coupon.setTimesUsed(0);
         }
-        // Set a default coupon type if not provided from DTO
-        // You might need to adjust 'Coupon.CouponType.USER' based on your application's default logic
         if (coupon.getType() == null) {
-            coupon.setType(Coupon.CouponType.USER); // Added these lines
+            coupon.setType(Coupon.CouponType.USER);
         }
-        // Additional validation can be added here if needed
         Coupon savedCoupon = couponRepository.save(coupon);
         return couponMapper.toDTO(savedCoupon);
     }
@@ -61,22 +57,27 @@ public class CouponService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional // Ensure this method is transactional for database operations
+    @Transactional
     public void deleteCoupon(Long id) {
-        Coupon coupon = couponRepository.findById(id) // Fetch the coupon to ensure it exists and to get the object
-                .orElseThrow(() -> new ResourceNotFoundException("Coupon not found with id: " + id)); //
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Coupon not found with id: " + id));
 
-        // Find all orders that use this coupon and set their coupon_id to null
-        List<Order> associatedOrders = orderRepository.findByCoupon(coupon); //
-        for (Order order : associatedOrders) { //
-            order.setCoupon(null); //
-            orderRepository.save(order); // Save the updated order
+        List<Order> associatedOrders = orderRepository.findByCoupon(coupon);
+        for (Order order : associatedOrders) {
+            order.setCoupon(null);
+            orderRepository.save(order);
         }
 
-        couponRepository.deleteById(id); // Now delete the coupon
+        couponRepository.deleteById(id);
     }
 
     public List<Map<String, Object>> getCouponUsageStatistics() {
         return orderRepository.countByCouponUsageByDay();
     }
+
+    // --- NEW METHOD START ---
+    public List<Map<String, Object>> getCouponUsageStatisticsById(Long couponId) {
+        return orderRepository.countByCouponUsageByDayForCoupon(couponId);
+    }
+    // --- NEW METHOD END ---
 }

@@ -1,4 +1,4 @@
-// demo/src/main/java/com/example/demo/repositories/OrderRepository.java
+// isamil22/ecommerce-basic/ecommerce-basic-de52fb3f9923420c0ceb538f0eea6ad24aa94a25/demo/src/main/java/com/example/demo/repositories/OrderRepository.java
 package com.example.demo.repositories;
 
 import com.example.demo.model.Order;
@@ -6,6 +6,7 @@ import com.example.demo.model.User;
 import com.example.demo.model.Coupon;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param; // Import Param
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,7 +23,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByCoupon(Coupon coupon);
 
-    // Add these methods:
     // This will allow finding orders by the ID of the associated User.
     List<Order> findByUser_Id(Long userId);
 
@@ -34,4 +34,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT FUNCTION('DATE', o.createdAt) as date, COUNT(o) as count FROM Order o WHERE o.coupon IS NOT NULL GROUP BY FUNCTION('DATE', o.createdAt)")
     List<Map<String, Object>> countByCouponUsageByDay();
+
+    // --- NEW METHOD START ---
+    @Query("SELECT FUNCTION('DATE', o.createdAt) as date, COUNT(o) as count FROM Order o WHERE o.coupon.id = :couponId GROUP BY FUNCTION('DATE', o.createdAt)")
+    List<Map<String, Object>> countByCouponUsageByDayForCoupon(@Param("couponId") Long couponId);
+    // --- NEW METHOD END ---
 }

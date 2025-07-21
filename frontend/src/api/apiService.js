@@ -262,7 +262,6 @@ export const validateCoupon = (code) => {
     return apiService.get(`/coupons/validate/${code}`);
 };
 
-// THIS IS THE NEW FUNCTION
 export const getAllCoupons = () => {
     return apiService.get('/coupons');
 };
@@ -273,5 +272,10 @@ export const deleteCoupon = (id) => {
 
 export const getCouponUsageStatistics = () => {
     return apiService.get('/coupons/usage-statistics');
+};
+
+// --- THIS IS THE NEW FUNCTION ---
+export const getCouponUsageStatisticsById = (couponId) => {
+    return apiService.get(`/coupons/${couponId}/usage-statistics`);
 };
 // --- NEW COUPON FUNCTIONS END ---

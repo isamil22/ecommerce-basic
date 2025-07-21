@@ -1,5 +1,4 @@
-// isamil22/ecommerce-basic/ecommerce-basic-0f55bfa61258d154774d02769dfa0c05f3c7e830/demo/src/main/java/com/example/demo/controller/CouponController.java
-
+// isamil22/ecommerce-basic/ecommerce-basic-de52fb3f9923420c0ceb538f0eea6ad24aa94a25/demo/src/main/java/com/example/demo/controller/CouponController.java
 package com.example.demo.controller;
 
 import com.example.demo.dto.CouponDTO;
@@ -56,4 +55,12 @@ public class CouponController {
     public ResponseEntity<List<Map<String, Object>>> getCouponUsageStatistics() {
         return ResponseEntity.ok(couponService.getCouponUsageStatistics());
     }
+
+    // --- NEW ENDPOINT START ---
+    @GetMapping("/{id}/usage-statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getCouponUsageStatisticsById(@PathVariable Long id) {
+        return ResponseEntity.ok(couponService.getCouponUsageStatisticsById(id));
+    }
+    // --- NEW ENDPOINT END ---
 }

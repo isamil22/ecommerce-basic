@@ -1,3 +1,4 @@
+// isamil22/ecommerce-basic/ecommerce-basic-de52fb3f9923420c0ceb538f0eea6ad24aa94a25/frontend/src/pages/admin/AdminCouponsPage.jsx
 import {
     Button,
     DatePicker,
@@ -7,15 +8,13 @@ import {
     Select,
     Table,
     message,
-    Space,
     Popconfirm,
     Switch,
 } from "antd";
 import { useEffect, useState } from "react";
-// Import getAllProducts and getAllCategories from apiService
-import { createCoupon, getAllCoupons as fetchAllCoupons, deleteCoupon, getAllProducts, getAllCategories, getCouponUsageStatistics } from "../../api/apiService"; //
+import { createCoupon, getAllCoupons as fetchAllCoupons, deleteCoupon, getAllProducts, getAllCategories } from "../../api/apiService";
 import dayjs from "dayjs";
-import { Line } from '@ant-design/plots';
+import CouponUsageChart from "../../components/CouponUsageChart"; // Import the new chart component
 
 const { Option } = Select;
 
@@ -23,35 +22,29 @@ const AdminCouponsPage = () => {
     const [form] = Form.useForm();
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [products, setProducts] = useState([]); // State for products
-    const [categories, setCategories] = useState([]); // State for categories
-    const [usageData, setUsageData] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    // REMOVED: No longer need state for combined usage data
+    // const [usageData, setUsageData] = useState([]);
 
     useEffect(() => {
         getAllCoupons();
-        fetchProductsAndCategories(); // Fetch products and categories when component mounts
-        fetchUsageData();
+        fetchProductsAndCategories();
+        // REMOVED: No longer need to fetch combined usage data
+        // fetchUsageData();
     }, []);
 
-    const fetchUsageData = async () => {
-        try {
-            const res = await getCouponUsageStatistics();
-            setUsageData(res.data.map(d => ({ ...d, date: dayjs(d.date).format('YYYY-MM-DD') })));
-        } catch (error) {
-            message.error("Failed to fetch coupon usage data.");
-            console.error("Error fetching usage data:", error);
-        }
-    };
-
+    // REMOVED: This function is no longer needed
+    // const fetchUsageData = async () => { ... };
 
     const fetchProductsAndCategories = async () => {
         try {
             const [productsRes, categoriesRes] = await Promise.all([
-                getAllProducts({ page: 0, size: 9999, sort: 'name,asc' }), // Fetch all products, unpaginated
-                getAllCategories(), // Fetch all categories
+                getAllProducts({ page: 0, size: 9999, sort: 'name,asc' }),
+                getAllCategories(),
             ]);
-            setProducts(productsRes.data.content || productsRes.data); // Adjust based on actual API response structure
-            setCategories(categoriesRes.data); //
+            setProducts(productsRes.data.content || productsRes.data);
+            setCategories(categoriesRes.data);
         } catch (error) {
             message.error("Failed to fetch products or categories.");
             console.error("Error fetching products/categories:", error);
@@ -73,11 +66,9 @@ const AdminCouponsPage = () => {
     const onFinish = async (values) => {
         try {
             setLoading(true);
-            // Format date before sending
             const payload = {
                 ...values,
                 expiryDate: values.expiryDate ? dayjs(values.expiryDate).toISOString() : null,
-                // Ensure applicableProducts and applicableCategories are arrays or null
                 applicableProducts: values.applicableProducts && values.applicableProducts.length > 0 ? values.applicableProducts : null,
                 applicableCategories: values.applicableCategories && values.applicableCategories.length > 0 ? values.applicableCategories : null,
             };
@@ -110,12 +101,8 @@ const AdminCouponsPage = () => {
             title: "Discount",
             key: "discount",
             render: (_, record) => {
-                if (record.discountType === 'PERCENTAGE') {
-                    return `${record.discountValue}%`;
-                }
-                if (record.discountType === 'FIXED_AMOUNT') {
-                    return `$${record.discountValue.toFixed(2)}`;
-                }
+                if (record.discountType === 'PERCENTAGE') return `${record.discountValue}%`;
+                if (record.discountType === 'FIXED_AMOUNT') return `$${record.discountValue.toFixed(2)}`;
                 return 'Free Shipping';
             },
         },
@@ -133,14 +120,9 @@ const AdminCouponsPage = () => {
             render: (_, record) => {
                 const productNames = record.applicableProducts?.map(p => p.name).join(', ');
                 const categoryNames = record.applicableCategories?.map(c => c.name).join(', ');
-
-                if (productNames && categoryNames) {
-                    return `Products: ${productNames}; Categories: ${categoryNames}`;
-                } else if (productNames) {
-                    return `Products: ${productNames}`;
-                } else if (categoryNames) {
-                    return `Categories: ${categoryNames}`;
-                }
+                if (productNames && categoryNames) return `Products: ${productNames}; Categories: ${categoryNames}`;
+                if (productNames) return `Products: ${productNames}`;
+                if (categoryNames) return `Categories: ${categoryNames}`;
                 return 'All';
             },
         },
@@ -162,26 +144,19 @@ const AdminCouponsPage = () => {
             ),
         },
     ];
-    const chartConfig = {
-        data: usageData,
-        xField: 'date',
-        yField: 'count',
-        xAxis: {
-            tickCount: 5,
-        },
-        smooth: true,
-    };
+
+    // REMOVED: The main chart config is no longer needed
+    // const chartConfig = { ... };
 
     return (
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Manage Coupons</h1>
-            <div className="bg-white p-8 rounded-lg shadow-md mb-8">
-                <h2 className="text-xl font-semibold mb-4">Daily Coupon Usage</h2>
-                <Line {...chartConfig} />
-            </div>
+            {/* REMOVED: The main chart component is gone from here */}
             <div className="bg-white p-8 rounded-lg shadow-md mb-8">
                 <h2 className="text-xl font-semibold mb-4">Create New Coupon</h2>
+                {/* Form remains the same */}
                 <Form layout="vertical" form={form} onFinish={onFinish}>
+                    {/* ... all Form.Item components remain unchanged ... */}
                     <Form.Item label="Coupon Name" name="name" rules={[{ required: true }]}>
                         <Input placeholder="e.g., Summer Sale" />
                     </Form.Item>
@@ -207,13 +182,12 @@ const AdminCouponsPage = () => {
                     <Form.Item label="Usage Limit" name="usageLimit" rules={[{ required: true }]}>
                         <InputNumber min={0} className="w-full" placeholder="Total times this coupon can be used (0 for unlimited)" />
                     </Form.Item>
-                    {/* New: Product-Specific Discount Field */}
                     <Form.Item label="Applicable Products (Optional)" name="applicableProducts">
                         <Select
                             mode="multiple"
                             placeholder="Select products for this coupon"
                             filterOption={(input, option) =>
-                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                (option?.children ?? '').toLowerCase().indexOf(input.toLowerCase()) >= 0
                             }
                         >
                             {products.map(product => (
@@ -221,13 +195,12 @@ const AdminCouponsPage = () => {
                             ))}
                         </Select>
                     </Form.Item>
-                    {/* New: Category-Specific Discount Field */}
                     <Form.Item label="Applicable Categories (Optional)" name="applicableCategories">
                         <Select
                             mode="multiple"
                             placeholder="Select categories for this coupon"
                             filterOption={(input, option) =>
-                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                (option?.children ?? '').toLowerCase().indexOf(input.toLowerCase()) >= 0
                             }
                         >
                             {categories.map(category => (
@@ -253,6 +226,16 @@ const AdminCouponsPage = () => {
                     rowKey="id"
                     loading={loading}
                     scroll={{ x: true }}
+                    // --- ADD THIS EXPANDABLE CONFIG ---
+                    expandable={{
+                        expandedRowRender: (record) => (
+                            <div style={{ padding: '16px' }}>
+                                <h3 style={{ marginBottom: '16px' }}>Usage for: {record.name}</h3>
+                                <CouponUsageChart couponId={record.id} />
+                            </div>
+                        ),
+                        rowExpandable: (record) => record.timesUsed > 0, // Only allow expanding if the coupon has been used
+                    }}
                 />
             </div>
         </div>
