@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Add this import
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -86,7 +86,8 @@ public class OrderService {
             }
 
             // New: First-Time Customer Validation
-            if (coupon.isFirstTimeOnly() && orderRepository.existsByUserId(userId)) {
+            // Corrected method call from existsByUserId to existsByUser_Id
+            if (coupon.isFirstTimeOnly() && orderRepository.existsByUser_Id(userId)) {
                 throw new IllegalStateException("This coupon is for first-time customers only.");
             }
 
@@ -197,13 +198,14 @@ public class OrderService {
     }
 
 
-    @Transactional(readOnly = true) // <-- Add this annotation
+    @Transactional(readOnly = true)
     public List<OrderDTO> getAllOrders() {
         return orderMapper.toDTOs(orderRepository.findByDeleted(false));
     }
 
     public List<OrderDTO> getUserOrders(Long userId) {
-        return orderMapper.toDTOs(orderRepository.findByUserId(userId));
+        // Corrected method call from findByUserId to findByUser_Id
+        return orderMapper.toDTOs(orderRepository.findByUser_Id(userId));
     }
 
     public OrderDTO updateOrderStatus(Long orderId, Order.OrderStatus status) {

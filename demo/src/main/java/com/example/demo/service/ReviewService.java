@@ -30,7 +30,8 @@ public class ReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check if the user has purchased at least one product
-        if (!orderRepository.existsByUserId(userId)) {
+        // Corrected method call from existsByUserId to existsByUser_Id
+        if (!orderRepository.existsByUser_Id(userId)) {
             throw new AccessDeniedException("You can only review our service after making a purchase.");
         }
 

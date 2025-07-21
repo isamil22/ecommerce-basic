@@ -100,7 +100,8 @@ public class UserService {
         if (!userRepository.existsById(id)) {
             throw new ResourceNotFoundException("User not found with id: " + id);
         }
-        orderRepository.deleteAll(orderRepository.findByUserId(id));
+        // Corrected method call from findByUserId to findByUser_Id
+        orderRepository.deleteAll(orderRepository.findByUser_Id(id));
         commentRepository.deleteAll(commentRepository.findByUserId(id));
         reviewRepository.deleteAll(reviewRepository.findByUserId(id));
         userRepository.deleteById(id);
