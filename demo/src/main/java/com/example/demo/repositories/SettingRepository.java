@@ -14,8 +14,8 @@ public interface SettingRepository extends JpaRepository<Setting, String> {
 
     /**
      * Finds a setting by its unique key.
-     * @param key The key of the setting to find.
+     * @param settingKey The key of the setting to find.
      * @return An Optional containing the setting if found, or empty otherwise.
      */
-    Optional<Setting> findByKey(String key);
+    Optional<Setting> findBySettingKey(String settingKey);
 }

@@ -30,7 +30,7 @@ public class SettingsController {
     public ResponseEntity<Map<String, String>> getSettings() {
         List<Setting> settings = settingRepository.findAll();
         Map<String, String> settingsMap = settings.stream()
-                .collect(Collectors.toMap(Setting::getKey, Setting::getValue));
+                .collect(Collectors.toMap(Setting::getSettingKey, Setting::getValue));
         return ResponseEntity.ok(settingsMap);
     }
 
@@ -43,9 +43,9 @@ public class SettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> saveSettings(@RequestBody Map<String, String> settings) {
         settings.forEach((key, value) -> {
-            Setting setting = settingRepository.findByKey(key)
+            Setting setting = settingRepository.findBySettingKey(key)
                     .orElse(new Setting()); // Create new setting if it doesn't exist
-            setting.setKey(key);
+            setting.setSettingKey(key);
             setting.setValue(value);
             settingRepository.save(setting);
         });

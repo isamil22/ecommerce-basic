@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -20,9 +21,11 @@ public class Setting {
 
     /**
      * The unique key for the setting (e.g., "facebookPixelId").
+     * Renamed from "key" to "settingKey" to avoid SQL reserved keyword conflicts.
      */
     @Id
-    private String key;
+    @Column(name = "setting_key") // Explicitly name the column in the database
+    private String settingKey;
 
     /**
      * The value of the setting.
