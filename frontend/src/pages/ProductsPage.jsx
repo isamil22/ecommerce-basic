@@ -1,14 +1,14 @@
 // frontend/src/pages/ProductsPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // <-- 1. Import useCallback
 import ProductCard from '../components/ProductCard';
-import { getAllProducts, getAllCategories, getAllPacks } from '../api/apiService';
+import { getAllProducts, getAllCategories, getAllPacks, getProductSuggestions } from '../api/apiService';
 import Loader from '../components/Loader';
-import PackCard from '../components/PackCard'; // Import PackCard
-import ReactGA from 'react-ga4'; // <-- 1. Import ReactGA
+import PackCard from '../components/PackCard';
+import ReactGA from 'react-ga4';
 
 const ProductsPage = () => {
-    const [items, setItems] = useState([]); // Changed from 'products' to 'items'
+    const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -19,13 +19,15 @@ const ProductsPage = () => {
         maxPrice: '',
         brand: '',
         type: 'ALL',
-        productType: 'products' // 'products' or 'packs'
+        productType: 'products'
     });
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [sort, setSort] = useState('name,asc');
+    const [suggestions, setSuggestions] = useState([]);
 
-    const fetchItemsAndCategories = async () => {
+    // --- MODIFIED START ---
+    const fetchItemsAndCategories = useCallback(async (searchQuery) => {
         setLoading(true);
         setError('');
         try {
@@ -36,7 +38,7 @@ const ProductsPage = () => {
             const params = {
                 page,
                 sort: `${sortField},${sortDirection}`,
-                search: filters.search || null,
+                search: searchQuery, // Use the passed search query
                 categoryId: filters.categoryId || null,
                 minPrice: filters.minPrice || null,
                 maxPrice: filters.maxPrice || null,
@@ -47,12 +49,10 @@ const ProductsPage = () => {
             let response;
             if (filters.productType === 'packs') {
                 response = await getAllPacks(params);
-                // Handle the array directly for packs
                 setItems(response.data);
-                setTotalPages(1); // Since it's not paginated, there's only one page
+                setTotalPages(1);
             } else {
                 response = await getAllProducts(params);
-                // Handle the paginated object for products
                 setItems(response.data.content);
                 setTotalPages(response.data.totalPages);
             }
@@ -63,28 +63,63 @@ const ProductsPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [sort, page, filters.categoryId, filters.minPrice, filters.maxPrice, filters.brand, filters.type, filters.productType]);
+    // --- MODIFIED END ---
 
     useEffect(() => {
-        fetchItemsAndCategories();
-    }, [filters, page, sort]);
+        if (filters.search) {
+            const fetchSuggestions = async () => {
+                try {
+                    const response = await getProductSuggestions(filters.search);
+                    setSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                }
+            };
+            const handler = setTimeout(() => {
+                fetchSuggestions();
+            }, 300); // Debounce to avoid excessive API calls
+
+            return () => {
+                clearTimeout(handler);
+            };
+        } else {
+            setSuggestions([]);
+        }
+    }, [filters.search]);
+
+    // --- MODIFIED START ---
+    useEffect(() => {
+        fetchItemsAndCategories(filters.search);
+    }, [fetchItemsAndCategories, filters.search]);
+    // --- MODIFIED END ---
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
-
-        // v-- 2. Add this block --v
         if (name === 'search' && value) {
             ReactGA.event({
                 category: 'Engagement',
                 action: 'search',
-                label: value // This sends the exact search term to GA
+                label: value
             });
         }
-        // ^-- End of new block --^
-
         setFilters(prev => ({ ...prev, [name]: value }));
         setPage(0);
     };
+
+    // --- MODIFIED START ---
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        fetchItemsAndCategories(filters.search);
+        setSuggestions([]);
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setFilters(prev => ({ ...prev, search: suggestion }));
+        setSuggestions([]);
+        fetchItemsAndCategories(suggestion); // Immediately fetch
+    };
+    // --- MODIFIED END ---
 
     const handleSortChange = (e) => {
         setSort(e.target.value);
@@ -103,7 +138,6 @@ const ProductsPage = () => {
         }
     };
 
-    // Determine which card component to use
     const CardComponent = filters.productType === 'packs' ? PackCard : ProductCard;
 
 
@@ -111,16 +145,32 @@ const ProductsPage = () => {
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Our Products</h1>
 
-            {/* Filters Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 p-4 bg-gray-100 rounded-lg">
-                <input
-                    type="text"
-                    name="search"
-                    placeholder="Search..."
-                    value={filters.search}
-                    onChange={handleFilterChange}
-                    className="p-2 border rounded-md"
-                />
+                <form onSubmit={handleSearchSubmit} className="relative">
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Search..."
+                        value={filters.search}
+                        onChange={handleFilterChange}
+                        autoComplete="off" // <-- Add this to disable browser's own autocomplete
+                        className="p-2 border rounded-md w-full"
+                    />
+                    {suggestions.length > 0 && (
+                        <ul className="absolute z-10 w-full bg-white border rounded-md mt-1">
+                            {suggestions.map((suggestion, index) => (
+                                <li
+                                    key={index}
+                                    className="p-2 hover:bg-gray-200 cursor-pointer"
+                                    onClick={() => handleSuggestionClick(suggestion)}
+                                >
+                                    {suggestion}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </form>
+                {/* ... (rest of the filter inputs are unchanged) ... */}
                 <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className="p-2 border rounded-md" disabled={filters.productType === 'packs'}>
                     <option value="">All Categories</option>
                     {categories.map(category => (
@@ -176,7 +226,6 @@ const ProductsPage = () => {
                             <p className="col-span-full text-center">No items match your criteria.</p>
                         )}
                     </div>
-                    {/* Pagination Controls - only show if productType is not packs */}
                     {filters.productType !== 'packs' && totalPages > 1 && (
                         <div className="flex justify-center items-center mt-8 space-x-4">
                             <button onClick={handlePrevPage} disabled={page === 0} className="px-4 py-2 bg-pink-500 text-white rounded-md disabled:bg-gray-300">

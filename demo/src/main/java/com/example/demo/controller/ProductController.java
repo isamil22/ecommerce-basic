@@ -35,6 +35,11 @@ public class ProductController {
         return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
     }
 
+    @GetMapping("/suggestions")
+    public ResponseEntity<List<String>> getProductSuggestions(@RequestParam String query) {
+        return ResponseEntity.ok(productService.getProductSuggestions(query));
+    }
+
     @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> updateProduct(

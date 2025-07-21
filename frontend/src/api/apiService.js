@@ -279,3 +279,7 @@ export const getCouponUsageStatisticsById = (couponId) => {
     return apiService.get(`/coupons/${couponId}/usage-statistics`);
 };
 // --- NEW COUPON FUNCTIONS END ---
+
+export const getProductSuggestions = (query) => {
+    return apiService.get('/products/suggestions', { params: { query } });
+};
