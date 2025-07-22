@@ -1,28 +1,36 @@
+// frontend/src/components/ProductCard.jsx
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-// REMOVED: import { addToCart } from '../redux/cartSlice'; // This was based on a previous file structure. Adjust if your cart logic is different.
 import ReactGA from "react-ga4";
 
 const ProductCard = ({ product }) => {
-    // Correctly access the first image from the 'images' array
     const fullImageUrl = (product.images && product.images.length > 0)
         ? product.images[0]
         : 'https://placehold.co/300x300/E91E63/FFFFFF?text=Product';
 
     const handleAddToCart = () => {
-        // NOTE: You will need to re-integrate your Redux `addToCart` dispatch here if it's still in use.
-        // dispatch(addToCart(product));
-
         // This sends the event to Google Analytics
         ReactGA.event({
             category: 'Ecommerce',
             action: 'add_to_cart',
-            label: product.name,    // The name of the product added
-            value: product.price    // The price of the product
+            label: product.name,
+            value: product.price
         });
 
-        // You might want to show a notification to the user here.
+        // --- ADD THIS FOR FACEBOOK PIXEL ---
+        if (typeof window.fbq === 'function') {
+            window.fbq('track', 'AddToCart', {
+                content_ids: [product.id],
+                content_name: product.name,
+                content_type: 'product',
+                value: product.price,
+                currency: 'USD'
+            });
+        }
+        // ------------------------------------
+
         console.log(`Added ${product.name} to cart`);
     };
 
@@ -33,9 +41,8 @@ const ProductCard = ({ product }) => {
                     src={fullImageUrl}
                     alt={product.name}
                     className="w-full h-56 object-cover bg-gray-200"
-                    // This fallback will be used if an image is missing from the backend
                     onError={(e) => {
-                        e.currentTarget.onerror = null; // prevents looping
+                        e.currentTarget.onerror = null;
                         e.currentTarget.src = 'https://placehold.co/300x300/E91E63/FFFFFF?text=No+Image';
                     }}
                 />

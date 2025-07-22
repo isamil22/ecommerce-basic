@@ -94,15 +94,11 @@ const PackDetailPage = () => {
     const [initialPackImageUrl, setInitialPackImageUrl] = useState('');
 
 
-    // This effect runs whenever the user's selections change to create a new image
     useEffect(() => {
         if (!pack || Object.keys(selections).length === 0) return;
-
-        // **NEW LOGIC**: Check if the current selection is the same as the initial default selection.
         const isDefaultSelection = JSON.stringify(selections) === JSON.stringify(initialSelections);
 
         if (isDefaultSelection && initialPackImageUrl) {
-            // If it's the default selection, use the original pack image from the backend.
             setComposedImageUrl(initialPackImageUrl);
             return;
         }
@@ -163,7 +159,6 @@ const PackDetailPage = () => {
 
     }, [selections, pack, initialPackImageUrl, initialSelections]);
 
-    // This effect runs once to fetch the initial pack data
     useEffect(() => {
         const fetchPack = async () => {
             try {
@@ -172,6 +167,18 @@ const PackDetailPage = () => {
                 setPack(packData);
                 setComposedImageUrl(packData.imageUrl);
                 setInitialPackImageUrl(packData.imageUrl);
+
+                // --- FACEBOOK PIXEL: VIEWCONTENT EVENT ---
+                if (window.fbq) {
+                    window.fbq('track', 'ViewContent', {
+                        content_ids: [packData.id],
+                        content_name: packData.name,
+                        content_type: 'product_group',
+                        value: packData.price,
+                        currency: 'USD'
+                    });
+                }
+                // -----------------------------------------
 
                 const initial = {};
                 if (packData && packData.items) {
@@ -210,6 +217,19 @@ const PackDetailPage = () => {
         try {
             const promises = Object.values(selections).map(productId => addToCart(productId, 1));
             await Promise.all(promises);
+
+            // --- FACEBOOK PIXEL: ADD TO CART EVENT ---
+            if (window.fbq) {
+                window.fbq('track', 'AddToCart', {
+                    content_ids: Object.values(selections),
+                    content_name: pack.name,
+                    content_type: 'product_group',
+                    value: pack.price,
+                    currency: 'USD'
+                });
+            }
+            // -----------------------------------------
+
             setMessage('All selected pack items have been added to your cart!');
         } catch (err) {
             setError('Failed to add items to cart. Please make sure you are logged in.');
@@ -281,5 +301,3 @@ const PackDetailPage = () => {
 };
 
 export default PackDetailPage;
-
-

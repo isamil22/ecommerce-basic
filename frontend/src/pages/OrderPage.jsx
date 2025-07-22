@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCart, createOrder, validateCoupon } from '../api/apiService';
 import { toast } from 'react-toastify';
-import FeedbackForm from '../components/FeedbackForm'; // <-- 1. Import the new component
+import FeedbackForm from '../components/FeedbackForm';
 
 const OrderPage = () => {
     const [cart, setCart] = useState(null);
@@ -59,6 +59,14 @@ const OrderPage = () => {
         }
     };
 
+    const calculateSubtotal = () => {
+        if (!cart || !cart.items) return 0;
+        return cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    };
+
+    const subtotal = calculateSubtotal();
+    const total = (subtotal - discount) > 0 ? (subtotal - discount) : 0;
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -71,26 +79,29 @@ const OrderPage = () => {
 
         try {
             await createOrder({ ...formData, couponCode: appliedCoupon });
+
+            // --- FACEBOOK PIXEL: PURCHASE EVENT ---
+            if (window.fbq && cart) {
+                window.fbq('track', 'Purchase', {
+                    value: total,
+                    currency: 'USD',
+                    content_ids: cart.items.map(item => item.productId),
+                    content_type: 'product'
+                });
+            }
+            // ------------------------------------
+
             setSuccess('Order placed successfully! Redirecting to profile...');
             toast.success('Order placed successfully!');
-            // Keep user on the page to see feedback form, then redirect.
             setTimeout(() => {
                 navigate('/profile');
-            }, 5000); // Increased delay to 5 seconds
+            }, 5000);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Failed to place order.';
             setError(errorMessage);
             toast.error(errorMessage);
         }
     };
-
-    const calculateSubtotal = () => {
-        if (!cart || !cart.items) return 0;
-        return cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
-
-    const subtotal = calculateSubtotal();
-    const total = (subtotal - discount) > 0 ? (subtotal - discount) : 0;
 
     if (error && !success) return <p className="text-red-500 text-center p-4">{error}</p>;
     if (!cart) return <p className="text-center p-4">Loading your order details...</p>;
@@ -99,7 +110,6 @@ const OrderPage = () => {
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Confirm Your Order</h1>
 
-            {/* v-- 2. Updated this section --v */}
             {success ? (
                 <div className="max-w-md mx-auto text-center">
                     <p className="text-green-500 text-lg mb-4">{success}</p>

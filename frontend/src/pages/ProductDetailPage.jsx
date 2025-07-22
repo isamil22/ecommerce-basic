@@ -25,12 +25,26 @@ const ProductDetailPage = () => {
             getBestsellers()
         ])
             .then(([productResponse, bestsellersResponse]) => {
-                setProduct(productResponse.data);
+                const productData = productResponse.data;
+                setProduct(productData);
                 // Filter out the current product from the bestsellers list
                 setBestsellers(bestsellersResponse.data.filter(p => p.id.toString() !== id));
-                if (productResponse.data.images && productResponse.data.images.length > 0) {
-                    setSelectedImage(productResponse.data.images[0]);
+                if (productData.images && productData.images.length > 0) {
+                    setSelectedImage(productData.images[0]);
                 }
+
+                // --- FACEBOOK PIXEL: VIEWCONTENT EVENT ---
+                if (window.fbq) {
+                    window.fbq('track', 'ViewContent', {
+                        content_ids: [productData.id],
+                        content_name: productData.name,
+                        content_type: 'product',
+                        value: productData.price,
+                        currency: 'USD'
+                    });
+                }
+                // -----------------------------------------
+
             })
             .catch(err => {
                 console.error(`Error fetching data for product id ${id}:`, err);
@@ -52,6 +66,19 @@ const ProductDetailPage = () => {
     const handleAddToCart = async () => {
         try {
             await addToCart(product.id, quantity);
+
+            // --- FACEBOOK PIXEL: ADD TO CART EVENT ---
+            if (window.fbq) {
+                window.fbq('track', 'AddToCart', {
+                    content_ids: [product.id],
+                    content_name: product.name,
+                    content_type: 'product',
+                    value: product.price,
+                    currency: 'USD'
+                });
+            }
+            // -----------------------------------------
+
             setMessage('Product added to cart successfully!');
         } catch (err) {
             setMessage('Failed to add product to cart. Please log in.');

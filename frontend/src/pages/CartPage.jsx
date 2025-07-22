@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getCart, removeCartItem } from '../api/apiService';
-import { Link, useNavigate } from 'react-router-dom'; // <-- 1. Import useNavigate
-import ReactGA from "react-ga4"; // <-- 2. Import ReactGA
+import { Link, useNavigate } from 'react-router-dom';
+import ReactGA from "react-ga4";
 
 const CartPage = () => {
     const [cart, setCart] = useState(null);
     const [error, setError] = useState('');
-    const navigate = useNavigate(); // <-- 3. Initialize useNavigate
+    const navigate = useNavigate();
 
     const fetchCart = async () => {
         try {
@@ -35,18 +35,23 @@ const CartPage = () => {
         return cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
 
-    // v-- 4. Add this entire function --v
     const handleProceedToCheckout = () => {
         const totalAmount = calculateTotal();
 
-        // Track that the user has started the checkout process
+        // --- FACEBOOK PIXEL: INITIATE CHECKOUT EVENT ---
+        if (window.fbq) {
+            window.fbq('track', 'InitiateCheckout');
+        }
+        // ---------------------------------------------
+
+        // Track that the user has started the checkout process in Google Analytics
         ReactGA.event({
             category: 'Ecommerce',
             action: 'begin_checkout',
             label: `User checkout with ${cart.items.length} items`
         });
 
-        // Track the successful purchase and its value
+        // Track the successful purchase and its value in Google Analytics
         // NOTE: In a real app, this 'purchase' event should be on the "Thank You" page after payment is confirmed.
         // For this project structure, we fire it when they proceed to the final order page.
         ReactGA.event({
@@ -98,7 +103,6 @@ const CartPage = () => {
                         <h2 className="text-2xl font-bold">Total: ${calculateTotal().toFixed(2)}</h2>
                     </div>
                     <div className="text-center mt-8">
-                        {/* 5. Changed this from a Link to a Button */}
                         <button
                             onClick={handleProceedToCheckout}
                             className="bg-pink-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-pink-700 transition duration-300"
