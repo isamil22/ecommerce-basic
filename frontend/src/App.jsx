@@ -34,11 +34,13 @@ import PacksPage from "./pages/PacksPage.jsx";
 import PackDetailPage from "./pages/PackDetailPage.jsx";
 import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
-import SettingsPage from './pages/admin/SettingsPage.jsx'; // <-- ADD THIS LINE
+import SettingsPage from './pages/admin/SettingsPage.jsx';
 
 // --- NEW IMPORTS START ---
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import FacebookPixel from './components/FacebookPixel.jsx';     // <-- ADD THIS LINE
+import AnalyticsTracker from './components/AnalyticsTracker.jsx'; // <-- ADD THIS LINE
 // --- NEW IMPORTS END ---
 
 function App() {
@@ -92,9 +94,12 @@ function App() {
 
     return (
         <BrowserRouter>
+            {/* --- ADD THESE TWO COMPONENTS --- */}
+            <FacebookPixel />
+            <AnalyticsTracker />
+            {/* ---------------------------------- */}
             <div className="flex flex-col min-h-screen">
                 <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={handleSetIsAuthenticated} userRole={userRole} cartCount={cartCount} />
-                {/* --- ADD TOAST CONTAINER HERE --- */}
                 <ToastContainer
                     position="bottom-right"
                     autoClose={5000}
@@ -148,7 +153,7 @@ function App() {
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
                             <Route path="coupons" element={<AdminCouponsPage />} />
-                            <Route path="settings" element={<SettingsPage />} /> {/* <-- ADD THIS LINE */}
+                            <Route path="settings" element={<SettingsPage />} />
                         </Route>
                     </Routes>
                 </main>
