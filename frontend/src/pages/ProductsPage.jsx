@@ -1,6 +1,6 @@
 // frontend/src/pages/ProductsPage.jsx
 
-import React, { useState, useEffect, useCallback } from 'react'; // <-- 1. Import useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import ProductCard from '../components/ProductCard';
 import { getAllProducts, getAllCategories, getAllPacks, getProductSuggestions } from '../api/apiService';
 import Loader from '../components/Loader';
@@ -26,7 +26,6 @@ const ProductsPage = () => {
     const [sort, setSort] = useState('name,asc');
     const [suggestions, setSuggestions] = useState([]);
 
-    // --- MODIFIED START ---
     const fetchItemsAndCategories = useCallback(async (searchQuery) => {
         setLoading(true);
         setError('');
@@ -38,7 +37,7 @@ const ProductsPage = () => {
             const params = {
                 page,
                 sort: `${sortField},${sortDirection}`,
-                search: searchQuery, // Use the passed search query
+                search: searchQuery,
                 categoryId: filters.categoryId || null,
                 minPrice: filters.minPrice || null,
                 maxPrice: filters.maxPrice || null,
@@ -64,7 +63,6 @@ const ProductsPage = () => {
             setLoading(false);
         }
     }, [sort, page, filters.categoryId, filters.minPrice, filters.maxPrice, filters.brand, filters.type, filters.productType]);
-    // --- MODIFIED END ---
 
     useEffect(() => {
         if (filters.search) {
@@ -88,11 +86,9 @@ const ProductsPage = () => {
         }
     }, [filters.search]);
 
-    // --- MODIFIED START ---
     useEffect(() => {
         fetchItemsAndCategories(filters.search);
     }, [fetchItemsAndCategories, filters.search]);
-    // --- MODIFIED END ---
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -102,12 +98,18 @@ const ProductsPage = () => {
                 action: 'search',
                 label: value
             });
+            // --- ADD THIS FOR FACEBOOK PIXEL ---
+            if (typeof window.fbq === 'function') {
+                window.fbq('track', 'Search', {
+                    search_string: value
+                });
+            }
+            // ------------------------------------
         }
         setFilters(prev => ({ ...prev, [name]: value }));
         setPage(0);
     };
 
-    // --- MODIFIED START ---
     const handleSearchSubmit = (e) => {
         e.preventDefault();
         fetchItemsAndCategories(filters.search);
@@ -119,7 +121,6 @@ const ProductsPage = () => {
         setSuggestions([]);
         fetchItemsAndCategories(suggestion); // Immediately fetch
     };
-    // --- MODIFIED END ---
 
     const handleSortChange = (e) => {
         setSort(e.target.value);
@@ -170,7 +171,6 @@ const ProductsPage = () => {
                         </ul>
                     )}
                 </form>
-                {/* ... (rest of the filter inputs are unchanged) ... */}
                 <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className="p-2 border rounded-md" disabled={filters.productType === 'packs'}>
                     <option value="">All Categories</option>
                     {categories.map(category => (
