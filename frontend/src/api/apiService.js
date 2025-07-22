@@ -283,3 +283,5 @@ export const getCouponUsageStatisticsById = (couponId) => {
 export const getProductSuggestions = (query) => {
     return apiService.get('/products/suggestions', { params: { query } });
 };
+
+export default apiService; // <-- ADD THIS LINE
