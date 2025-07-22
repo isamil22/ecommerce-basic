@@ -34,6 +34,7 @@ import PacksPage from "./pages/PacksPage.jsx";
 import PackDetailPage from "./pages/PackDetailPage.jsx";
 import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
+import SettingsPage from './pages/admin/SettingsPage.jsx'; // <-- ADD THIS LINE
 
 // --- NEW IMPORTS START ---
 import { ToastContainer } from 'react-toastify';
@@ -147,6 +148,7 @@ function App() {
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
                             <Route path="coupons" element={<AdminCouponsPage />} />
+                            <Route path="settings" element={<SettingsPage />} /> {/* <-- ADD THIS LINE */}
                         </Route>
                     </Routes>
                 </main>
@@ -157,3 +159,5 @@ function App() {
 }
 
 export default App;
+
+
