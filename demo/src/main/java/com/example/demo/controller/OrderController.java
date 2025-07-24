@@ -4,10 +4,9 @@ import com.example.demo.dto.OrderDTO;
 import com.example.demo.model.Order;
 import com.example.demo.model.User;
 import com.example.demo.service.OrderService;
-import com.example.demo.service.UserService; // Import UserService
+import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus; // Import HttpStatus
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
-    // --- ADD THIS LINE ---
     private final UserService userService;
 
     @PostMapping
@@ -31,11 +29,20 @@ public class OrderController {
                                                 @RequestParam String city,
                                                 @RequestParam String address,
                                                 @RequestParam String phoneNumber,
-                                                // --- ADD THIS LINE ---
                                                 @RequestParam(required = false) String couponCode) {
         Long userId = ((User) userDetails).getId();
-        // --- PASS THE NEW PARAMETER TO THE SERVICE ---
         OrderDTO orderDTO = orderService.createOrder(userId, address, phoneNumber, clientFullName, city, couponCode);
+        return ResponseEntity.ok(orderDTO);
+    }
+
+    @PostMapping("/guest")
+    public ResponseEntity<OrderDTO> createGuestOrder(@RequestParam String clientFullName,
+                                                     @RequestParam String city,
+                                                     @RequestParam String address,
+                                                     @RequestParam String phoneNumber,
+                                                     @RequestParam String email,
+                                                     @RequestParam(required = false) String couponCode) {
+        OrderDTO orderDTO = orderService.createGuestOrder(address, phoneNumber, clientFullName, city, email, couponCode);
         return ResponseEntity.ok(orderDTO);
     }
 

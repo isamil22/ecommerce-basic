@@ -230,6 +230,20 @@ export const createOrder = (orderData) => {
     return apiService.post(`/orders?${params.toString()}`);
 };
 
+// --- NEW GUEST ORDER FUNCTION ---
+export const createGuestOrder = (orderData) => {
+    const params = new URLSearchParams();
+    params.append('clientFullName', orderData.clientFullName);
+    params.append('city', orderData.city);
+    params.append('address', orderData.address);
+    params.append('phoneNumber', orderData.phoneNumber);
+    params.append('email', orderData.email);
+    if (orderData.couponCode) {
+        params.append('couponCode', orderData.couponCode);
+    }
+    return apiService.post(`/orders/guest?${params.toString()}`);
+};
+
 export const deleteOrder = (orderId) => {
     return apiService.delete(`/orders/${orderId}`);
 };
@@ -284,4 +298,4 @@ export const getProductSuggestions = (query) => {
     return apiService.get('/products/suggestions', { params: { query } });
 };
 
-export default apiService; // <-- ADD THIS LINE
+export default apiService;

@@ -42,6 +42,26 @@ public class OrderService {
     private final CouponRepository couponRepository;
 
     @Transactional
+    public OrderDTO createGuestOrder(String address, String phoneNumber, String clientFullName, String city, String email, String couponCode) {
+        // Find or create a user for the guest
+        User guestUser = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(email);
+                    newUser.setFullName(clientFullName);
+                    // Guests don't have a password until they register
+                    newUser.setPassword(null);
+                    newUser.setRole(User.Role.USER); // Or a dedicated GUEST role
+                    newUser.setEmailConfirmation(true); // Or handle confirmation separately
+                    return userRepository.save(newUser);
+                });
+
+        // The rest of the logic is very similar to the createOrder method
+        // but uses the guestUser object instead of an authenticated principal.
+        return createOrder(guestUser.getId(), address, phoneNumber, clientFullName, city, couponCode);
+    }
+
+    @Transactional
     public OrderDTO createOrder(Long userId, String address, String phoneNumber, String clientFullName, String city, String couponCode) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

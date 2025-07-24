@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/auth/confirm-email",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
+                                "/api/orders/guest", // <-- GUEST CHECKOUT ENDPOINT ADDED HERE
                                 "/api/test-post")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET,
