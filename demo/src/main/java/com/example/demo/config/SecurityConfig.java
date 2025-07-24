@@ -48,17 +48,19 @@ public class SecurityConfig {
                                 "/api/auth/confirm-email",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
-                                "/api/orders/guest", // <-- GUEST CHECKOUT ENDPOINT ADDED HERE
-                                "/api/test-post")
+                                "/api/orders/guest",
+                                "/api/test-post",
+                                "/api/cart/add" // Allow guest users to add to cart
+                        )
                         .permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/products/**",
                                 "/api/categories/**",
-                                "/api/reviews/**", // Updated for broader access
-                                "/api/packs/**",   // Added for packs
+                                "/api/reviews/**",
+                                "/api/packs/**",
                                 "/api/hero",
                                 "/api/comments/product/**",
-                                "/api/settings"    // Added for settings
+                                "/api/settings"
                         )
                         .permitAll()
                         .requestMatchers("/", "/index.html", "/images/**", "/vite.svg").permitAll()
