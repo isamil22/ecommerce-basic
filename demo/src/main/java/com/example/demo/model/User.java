@@ -1,3 +1,5 @@
+// demo/src/main/java/com/example/demo/model/User.java
+
 package com.example.demo.model;
 
 import jakarta.persistence.*;
@@ -32,8 +34,8 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
 
-    @Column(nullable = true)
-    private String password; // <-- @NotBlank REMOVED FROM THIS LINE
+    @Column(nullable = true) // Allow password to be null
+    private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role;
