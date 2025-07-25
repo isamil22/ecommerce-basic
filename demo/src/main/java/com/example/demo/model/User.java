@@ -32,8 +32,7 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
 
-    @NotBlank
-    private String password;
+    private String password; // <-- @NotBlank REMOVED FROM THIS LINE
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -47,10 +46,8 @@ public class User implements UserDetails {
     private String resetPasswordToken;
     private LocalDateTime resetPasswordTokenExpiry;
 
-    // --- NEW CHANGE FOR RECAPTCHA ---
-    @Transient // This ensures the field is not saved to the database
+    @Transient
     private String recaptchaToken;
-    // ----------------------------------
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
