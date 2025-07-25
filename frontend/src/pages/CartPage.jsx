@@ -7,26 +7,41 @@ const CartPage = () => {
     const [cart, setCart] = useState(null);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const isAuthenticated = !!localStorage.getItem('token');
 
     const fetchCart = async () => {
-        try {
-            const response = await getCart();
-            setCart(response.data);
-        } catch (err) {
-            setError('Failed to fetch cart. Please try again later.');
+        if (isAuthenticated) {
+            try {
+                const response = await getCart();
+                setCart(response.data);
+            } catch (err) {
+                setError('Failed to fetch cart. Please try again later.');
+            }
+        } else {
+            const guestCart = JSON.parse(localStorage.getItem('cart')) || { items: [] };
+            setCart(guestCart);
         }
     };
 
     useEffect(() => {
         fetchCart();
-    }, []);
+    }, [isAuthenticated]);
 
     const handleRemove = async (productId) => {
-        try {
-            await removeCartItem(productId);
-            fetchCart(); // Refresh cart after removal
-        } catch (err) {
-            setError('Failed to remove item from cart.');
+        if (isAuthenticated) {
+            try {
+                await removeCartItem(productId);
+                fetchCart(); // Refresh cart after removal
+            } catch (err) {
+                setError('Failed to remove item from cart.');
+            }
+        } else {
+            const updatedCart = {
+                ...cart,
+                items: cart.items.filter(item => item.productId !== productId)
+            };
+            setCart(updatedCart);
+            localStorage.setItem('cart', JSON.stringify(updatedCart));
         }
     };
 
@@ -82,7 +97,7 @@ const CartPage = () => {
             ) : (
                 <div className="max-w-3xl mx-auto">
                     {cart.items.map(item => (
-                        <div key={item.id} className="flex items-center justify-between border-b py-4">
+                        <div key={item.id || item.productId} className="flex items-center justify-between border-b py-4">
                             <div>
                                 <h2 className="text-lg font-semibold">{item.productName}</h2>
                                 <p className="text-sm text-gray-600">Unit Price: ${item.price.toFixed(2)}</p>

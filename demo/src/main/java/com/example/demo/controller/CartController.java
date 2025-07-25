@@ -17,7 +17,6 @@ public class CartController {
     private final CartService cartService;
 
     @PostMapping("/add")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartDTO> addToCart(@AuthenticationPrincipal UserDetails userDetails,
                                              @RequestParam Long productId,
                                              @RequestParam Integer quantity){

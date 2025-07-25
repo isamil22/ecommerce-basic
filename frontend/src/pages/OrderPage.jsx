@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, createOrder, validateCoupon } from '../api/apiService';
+import { getCart, createOrder, validateCoupon, createGuestOrder } from '../api/apiService';
 import { toast } from 'react-toastify';
 import FeedbackForm from '../components/FeedbackForm';
 
 const OrderPage = () => {
     const [cart, setCart] = useState(null);
-    const [formData, setFormData] = useState({ clientFullName: '', city: '', address: '', phoneNumber: '' });
+    const [formData, setFormData] = useState({ clientFullName: '', city: '', address: '', phoneNumber: '', email: '' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
+    const isAuthenticated = !!localStorage.getItem('token');
 
     const [couponCode, setCouponCode] = useState('');
     const [discount, setDiscount] = useState(0);
@@ -27,16 +28,21 @@ const OrderPage = () => {
 
     useEffect(() => {
         const fetchCart = async () => {
-            try {
-                const response = await getCart();
-                setCart(response.data);
-            } catch (err) {
-                setError('Failed to fetch cart. Please login and try again.');
-                toast.error('Failed to fetch cart. Please login and try again.');
+            if (isAuthenticated) {
+                try {
+                    const response = await getCart();
+                    setCart(response.data);
+                } catch (err) {
+                    setError('Failed to fetch cart. Please login and try again.');
+                    toast.error('Failed to fetch cart. Please login and try again.');
+                }
+            } else {
+                const guestCart = JSON.parse(localStorage.getItem('cart')) || { items: [] };
+                setCart(guestCart);
             }
         };
         fetchCart();
-    }, []);
+    }, [isAuthenticated]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -72,13 +78,18 @@ const OrderPage = () => {
         setError('');
         setSuccess('');
 
-        if (!formData.clientFullName || !formData.city || !formData.address || !formData.phoneNumber) {
+        if (!formData.clientFullName || !formData.city || !formData.address || !formData.phoneNumber || (!isAuthenticated && !formData.email)) {
             setError('All delivery details fields are required.');
             return;
         }
 
         try {
-            await createOrder({ ...formData, couponCode: appliedCoupon });
+            if (isAuthenticated) {
+                await createOrder({ ...formData, couponCode: appliedCoupon });
+            } else {
+                await createGuestOrder({ ...formData, cartItems: cart.items, couponCode: appliedCoupon });
+                localStorage.removeItem('cart');
+            }
 
             // --- FACEBOOK PIXEL: PURCHASE EVENT ---
             if (window.fbq && cart) {
@@ -91,10 +102,10 @@ const OrderPage = () => {
             }
             // ------------------------------------
 
-            setSuccess('Order placed successfully! Redirecting to profile...');
+            setSuccess('Order placed successfully! Redirecting to the home page...');
             toast.success('Order placed successfully!');
             setTimeout(() => {
-                navigate('/profile');
+                navigate('/');
             }, 5000);
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'Failed to place order.';
@@ -125,7 +136,7 @@ const OrderPage = () => {
                             <div className="bg-white p-6 rounded-lg shadow-md">
                                 <h2 className="text-xl font-semibold mb-4 border-b pb-2">Order Summary</h2>
                                 {cart.items.map(item => (
-                                    <div key={item.id} className="flex justify-between items-center mb-2">
+                                    <div key={item.id || item.productId} className="flex justify-between items-center mb-2">
                                         <span className="text-gray-700">{item.productName} (x{item.quantity})</span>
                                         <span className="text-gray-800 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                                     </div>
@@ -155,6 +166,12 @@ const OrderPage = () => {
                             <div className="bg-white p-6 rounded-lg shadow-md">
                                 <h2 className="text-xl font-semibold mb-4">Delivery Details</h2>
                                 <form onSubmit={handleSubmit}>
+                                    {!isAuthenticated && (
+                                        <div className="mb-4">
+                                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
+                                            <input type="email" name="email" id="email" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" placeholder="your@email.com" />
+                                        </div>
+                                    )}
                                     <div className="mb-4">
                                         <label htmlFor="clientFullName" className="block text-sm font-medium text-gray-700">Full Name</label>
                                         <input type="text" name="clientFullName" id="clientFullName" required onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" placeholder="Your Full Name" />
