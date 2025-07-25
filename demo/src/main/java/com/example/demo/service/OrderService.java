@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.CartDTO;
+import com.example.demo.dto.GuestOrderRequestDTO;
 import com.example.demo.dto.OrderDTO;
 import com.example.demo.exception.InsufficientStockException;
 import com.example.demo.exception.ResourceNotFoundException;
@@ -42,13 +43,13 @@ public class OrderService {
     private final CouponRepository couponRepository;
 
     @Transactional
-    public OrderDTO createGuestOrder(String address, String phoneNumber, String clientFullName, String city, String email, String couponCode) {
+    public OrderDTO createGuestOrder(GuestOrderRequestDTO request) {
         // Find or create a user for the guest
-        User guestUser = userRepository.findByEmail(email)
+        User guestUser = userRepository.findByEmail(request.getEmail())
                 .orElseGet(() -> {
                     User newUser = new User();
-                    newUser.setEmail(email);
-                    newUser.setFullName(clientFullName);
+                    newUser.setEmail(request.getEmail());
+                    newUser.setFullName(request.getClientFullName());
                     // Guests don't have a password until they register
                     newUser.setPassword(null);
                     newUser.setRole(User.Role.USER); // Or a dedicated GUEST role
@@ -56,9 +57,52 @@ public class OrderService {
                     return userRepository.save(newUser);
                 });
 
-        // The rest of the logic is very similar to the createOrder method
-        // but uses the guestUser object instead of an authenticated principal.
-        return createOrder(guestUser.getId(), address, phoneNumber, clientFullName, city, couponCode);
+        if (request.getCartItems() == null || request.getCartItems().isEmpty()) {
+            throw new IllegalStateException("Cannot create an order with an empty cart");
+        }
+
+        Order order = new Order();
+        order.setUser(guestUser);
+        order.setClientFullName(request.getClientFullName());
+        order.setCity(request.getCity());
+        order.setAddress(request.getAddress());
+        order.setPhoneNumber(request.getPhoneNumber());
+        order.setStatus(Order.OrderStatus.PREPARING);
+        order.setCreatedAt(LocalDateTime.now());
+        // Set a default shipping cost
+        order.setShippingCost(new BigDecimal("10.00"));
+
+        // Create OrderItems directly from the DTO, checking stock
+        List<OrderItem> orderItems = request.getCartItems().stream().map(itemDTO -> {
+            Product product = productRepository.findById(itemDTO.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemDTO.getProductId()));
+
+            if (product.getQuantity() < itemDTO.getQuantity()) {
+                throw new InsufficientStockException("Not enough stock for product " + product.getName());
+            }
+
+            // Decrease product stock
+            product.setQuantity(product.getQuantity() - itemDTO.getQuantity());
+            productRepository.save(product);
+
+            return new OrderItem(null, order, product, itemDTO.getQuantity(), product.getPrice());
+        }).collect(Collectors.toList());
+
+        order.setItems(orderItems);
+
+        // Coupon and Total Calculation Logic would be added here, similar to the createOrder method
+        order.setDiscountAmount(BigDecimal.ZERO);
+
+
+        Order savedOrder = orderRepository.save(order);
+
+        try {
+            emailService.sendOrderConfirmation(savedOrder);
+        } catch (MailException e) {
+            logger.error("Failed to send guest order confirmation email for order ID " + savedOrder.getId(), e);
+        }
+
+        return orderMapper.toDTO(savedOrder);
     }
 
     @Transactional

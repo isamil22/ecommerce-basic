@@ -231,17 +231,11 @@ export const createOrder = (orderData) => {
 };
 
 // --- NEW GUEST ORDER FUNCTION ---
+// MODIFICATION: Remove URLSearchParams and send the object directly
 export const createGuestOrder = (orderData) => {
-    const params = new URLSearchParams();
-    params.append('clientFullName', orderData.clientFullName);
-    params.append('city', orderData.city);
-    params.append('address', orderData.address);
-    params.append('phoneNumber', orderData.phoneNumber);
-    params.append('email', orderData.email);
-    if (orderData.couponCode) {
-        params.append('couponCode', orderData.couponCode);
-    }
-    return apiService.post(`/orders/guest?${params.toString()}`);
+    // The 'orderData' object should contain all customer details AND the 'cartItems' array.
+    // Axios will automatically serialize this to JSON.
+    return apiService.post('/orders/guest', orderData);
 };
 
 export const deleteOrder = (orderId) => {

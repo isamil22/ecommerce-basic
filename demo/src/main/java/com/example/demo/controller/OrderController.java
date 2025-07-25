@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.GuestOrderRequestDTO;
 import com.example.demo.dto.OrderDTO;
 import com.example.demo.model.Order;
 import com.example.demo.model.User;
@@ -36,13 +37,8 @@ public class OrderController {
     }
 
     @PostMapping("/guest")
-    public ResponseEntity<OrderDTO> createGuestOrder(@RequestParam String clientFullName,
-                                                     @RequestParam String city,
-                                                     @RequestParam String address,
-                                                     @RequestParam String phoneNumber,
-                                                     @RequestParam String email,
-                                                     @RequestParam(required = false) String couponCode) {
-        OrderDTO orderDTO = orderService.createGuestOrder(address, phoneNumber, clientFullName, city, email, couponCode);
+    public ResponseEntity<OrderDTO> createGuestOrder(@RequestBody GuestOrderRequestDTO guestOrderRequest) {
+        OrderDTO orderDTO = orderService.createGuestOrder(guestOrderRequest);
         return ResponseEntity.ok(orderDTO);
     }
 
