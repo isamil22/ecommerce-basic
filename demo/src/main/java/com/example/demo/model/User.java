@@ -32,6 +32,7 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
 
+    @Column(nullable = true)
     private String password; // <-- @NotBlank REMOVED FROM THIS LINE
 
     @Enumerated(EnumType.STRING)
