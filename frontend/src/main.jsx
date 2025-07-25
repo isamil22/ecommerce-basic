@@ -1,13 +1,13 @@
 // frontend/src/main.jsx
 import React from 'react';
-import { hydrateRoot } from 'react-dom/client'; // Import hydrateRoot
+import { hydrateRoot } from 'react-dom/client'; // 1. Import hydrateRoot
 import './index.css';
 import App from './App.jsx';
 import { HelmetProvider } from 'react-helmet-async';
 
 const container = document.getElementById('root');
 
-// Use hydrateRoot to attach React to the pre-rendered HTML
+// 2. Use hydrateRoot instead of createRoot().render()
 hydrateRoot(
     container,
     <React.Fragment>
