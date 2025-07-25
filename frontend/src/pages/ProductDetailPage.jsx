@@ -1,3 +1,4 @@
+// frontend/src/pages/ProductDetailPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById, addToCart, getBestsellers } from '../api/apiService';
@@ -5,7 +6,7 @@ import Loader from '../components/Loader';
 import CommentForm from '../components/CommentForm';
 import ProductSlider from '../components/ProductSlider';
 
-const ProductDetailPage = () => {
+const ProductDetailPage = ({ fetchCartCount, isAuthenticated }) => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [bestsellers, setBestsellers] = useState([]);
@@ -64,36 +65,65 @@ const ProductDetailPage = () => {
     };
 
     const handleAddToCart = async () => {
-        try {
-            await addToCart(product.id, quantity);
+        setMessage('');
+        setError('');
 
-            // --- FACEBOOK PIXEL: ADD TO CART EVENT ---
-            if (window.fbq) {
-                window.fbq('track', 'AddToCart', {
-                    content_ids: [product.id],
-                    content_name: product.name,
-                    content_type: 'product',
-                    value: product.price,
-                    currency: 'USD'
-                });
+        if (!isAuthenticated) {
+            // Guest user: save to localStorage
+            try {
+                const guestCart = JSON.parse(localStorage.getItem('cart')) || { items: [] };
+                const existingItemIndex = guestCart.items.findIndex(item => item.productId === product.id);
+
+                if (existingItemIndex > -1) {
+                    guestCart.items[existingItemIndex].quantity += quantity;
+                } else {
+                    guestCart.items.push({
+                        productId: product.id,
+                        productName: product.name,
+                        price: product.price,
+                        quantity: quantity,
+                    });
+                }
+                localStorage.setItem('cart', JSON.stringify(guestCart));
+                setMessage('Product added to your cart!');
+                if (fetchCartCount) fetchCartCount();
+            } catch (e) {
+                setError('Could not add item to cart.');
+                console.error(e);
             }
-            // -----------------------------------------
-
-            setMessage('Product added to cart successfully!');
-        } catch (err) {
-            setMessage('Failed to add product to cart. Please log in.');
-            console.error(err);
+        } else {
+            // Authenticated user: call API
+            try {
+                await addToCart(product.id, quantity);
+                // --- FACEBOOK PIXEL: ADD TO CART EVENT ---
+                if (window.fbq) {
+                    window.fbq('track', 'AddToCart', {
+                        content_ids: [product.id],
+                        content_name: product.name,
+                        content_type: 'product',
+                        value: product.price,
+                        currency: 'USD'
+                    });
+                }
+                // -----------------------------------------
+                setMessage('Product added to cart successfully!');
+                if (fetchCartCount) fetchCartCount();
+            } catch (err) {
+                setError('Failed to add product to cart. Please try again.');
+                console.error(err);
+            }
         }
     };
 
     const handleOrderNow = async () => {
-        try {
-            await addToCart(product.id, quantity);
-            navigate('/cart');
-        } catch (err) {
-            setMessage('Failed to add product to cart. Please log in.');
-            console.error(err);
-        }
+        await handleAddToCart();
+        // Use a small timeout to allow state to update before navigating,
+        // otherwise if there's an error, it might navigate anyway.
+        setTimeout(() => {
+            if (!error) {
+                navigate('/order');
+            }
+        }, 100);
     };
 
     if (loading) {
@@ -188,6 +218,7 @@ const ProductDetailPage = () => {
                         />
                     </div>
                     {message && <p className="text-green-500 mb-4">{message}</p>}
+                    {error && <p className="text-red-500 mb-4">{error}</p>}
                     <div className="flex space-x-4">
                         <button
                             onClick={handleAddToCart}

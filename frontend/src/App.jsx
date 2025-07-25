@@ -61,7 +61,10 @@ function App() {
                 setCartCount(0);
             }
         } else {
-            setCartCount(0);
+            // Guest cart logic: read from localStorage
+            const guestCart = JSON.parse(localStorage.getItem('cart')) || { items: [] };
+            const totalItems = guestCart.items.reduce((sum, item) => sum + item.quantity, 0);
+            setCartCount(totalItems);
         }
     };
 
@@ -70,7 +73,6 @@ function App() {
             const token = localStorage.getItem('token');
             if (token) {
                 setIsAuthenticated(true);
-                fetchCartCount(); // Fetch cart count on auth check
                 try {
                     const response = await getUserProfile();
                     setUserRole(response.data.role);
@@ -80,9 +82,14 @@ function App() {
                     setUserRole(null);
                     localStorage.removeItem('token');
                 }
+            } else {
+                setIsAuthenticated(false);
+                setUserRole(null);
             }
         };
+
         checkAuthAndFetchRole();
+        fetchCartCount(); // Fetch count on load for both auth and guest users
     }, [isAuthenticated]);
 
     const handleSetIsAuthenticated = (authStatus) => {
@@ -118,7 +125,8 @@ function App() {
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/packs" element={<PacksPage />} />
                         <Route path="/packs/:id" element={<PackDetailPage />} />
-                        <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} />} />
+                        {/* Pass isAuthenticated to ProductDetailPage */}
+                        <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} isAuthenticated={isAuthenticated} />} />
                         <Route path="/hello" element={<HelloPage />} />
                         <Route
                             path="/auth"
@@ -164,5 +172,3 @@ function App() {
 }
 
 export default App;
-
-
