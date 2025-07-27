@@ -13,16 +13,28 @@ public class AnnouncementService {
     private final AnnouncementRepository announcementRepository;
 
     public AnnouncementDTO getAnnouncement() {
-        Announcement announcement = announcementRepository.findById(1L).orElse(new Announcement());
+        // Find by ID, or create a new default instance if not found.
+        Announcement announcement = announcementRepository.findById(1L).orElseGet(() -> {
+            Announcement defaultAnnouncement = new Announcement();
+            defaultAnnouncement.setId(1L);
+            defaultAnnouncement.setEnabled(false);
+            defaultAnnouncement.setText("");
+            defaultAnnouncement.setBackgroundColor("#ef4444");
+            defaultAnnouncement.setTextColor("#ffffff");
+            defaultAnnouncement.setAnimationType("none");
+            return defaultAnnouncement;
+        });
         return toDto(announcement);
     }
 
     public AnnouncementDTO updateAnnouncement(AnnouncementDTO dto) {
         Announcement announcement = announcementRepository.findById(1L).orElse(new Announcement());
+        announcement.setId(1L); // Ensure ID is set for new announcements
         announcement.setText(dto.getText());
         announcement.setBackgroundColor(dto.getBackgroundColor());
         announcement.setTextColor(dto.getTextColor());
         announcement.setEnabled(dto.isEnabled());
+        announcement.setAnimationType(dto.getAnimationType()); // Update animation type
         Announcement savedAnnouncement = announcementRepository.save(announcement);
         return toDto(savedAnnouncement);
     }
@@ -33,6 +45,7 @@ public class AnnouncementService {
         dto.setBackgroundColor(announcement.getBackgroundColor());
         dto.setTextColor(announcement.getTextColor());
         dto.setEnabled(announcement.isEnabled());
+        dto.setAnimationType(announcement.getAnimationType()); // Map animation type
         return dto;
     }
 }

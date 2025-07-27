@@ -8,6 +8,7 @@ const AdminAnnouncementPage = () => {
         backgroundColor: '#ef4444',
         textColor: '#ffffff',
         enabled: false,
+        animationType: 'none',
     });
     const [loading, setLoading] = useState(true);
 
@@ -15,7 +16,13 @@ const AdminAnnouncementPage = () => {
         const fetchAnnouncement = async () => {
             try {
                 const { data } = await getAnnouncement();
-                setAnnouncement(data);
+                setAnnouncement({
+                    text: data.text || '',
+                    backgroundColor: data.backgroundColor || '#ef4444',
+                    textColor: data.textColor || '#ffffff',
+                    enabled: data.enabled || false,
+                    animationType: data.animationType || 'none',
+                });
             } catch (error) {
                 toast.error('Failed to load announcement data.');
             } finally {
@@ -59,7 +66,7 @@ const AdminAnnouncementPage = () => {
                         id="text"
                         value={announcement.text}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
                     />
                 </div>
                 <div className="flex gap-4">
@@ -86,6 +93,32 @@ const AdminAnnouncementPage = () => {
                         />
                     </div>
                 </div>
+                <div>
+                    <label htmlFor="animationType" className="block text-sm font-medium text-gray-700">Animation Type</label>
+                    <select
+                        name="animationType"
+                        id="animationType"
+                        value={announcement.animationType}
+                        onChange={handleChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                    >
+                        <option value="none">None</option>
+                        <optgroup label="Professional & Subtle">
+                            <option value="pulse-custom">Pulse</option>
+                            <option value="text-glow">Text Glow</option>
+                            <option value="gradient-pan">Gradient Shift</option>
+                        </optgroup>
+                        <optgroup label="Attention-Grabbing">
+                            <option value="shake-custom">Shake</option>
+                            <option value="bounce-custom">Bounce</option>
+                            <option value="tada-custom">Tada</option>
+                            <option value="flash-urgent">Urgent Flash</option>
+                        </optgroup>
+                        <optgroup label="Scrolling">
+                            <option value="marquee">Marquee</option>
+                        </optgroup>
+                    </select>
+                </div>
                 <div className="flex items-center">
                     <input
                         type="checkbox"
@@ -100,7 +133,7 @@ const AdminAnnouncementPage = () => {
                 <div>
                     <button
                         type="submit"
-                        className="w-full bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700"
+                        className="w-full bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
                     >
                         Save Changes
                     </button>

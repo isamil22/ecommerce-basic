@@ -13,4 +13,5 @@ public class Announcement {
     private String backgroundColor;
     private String textColor;
     private boolean enabled;
+    private String animationType; // New field for animation
 }
