@@ -5,6 +5,7 @@ import { getProductById, addToCart, getBestsellers } from '../api/apiService';
 import Loader from '../components/Loader';
 import CommentForm from '../components/CommentForm';
 import ProductSlider from '../components/ProductSlider';
+import VisitorCounter from '../components/VisitorCounter'; // Import the component
 
 const ProductDetailPage = ({ fetchCartCount, isAuthenticated }) => {
     const { id } = useParams();
@@ -204,6 +205,9 @@ const ProductDetailPage = ({ fetchCartCount, isAuthenticated }) => {
                     )}
                     <h1 className="text-4xl font-extrabold text-gray-800 mb-4">{product.name}</h1>
                     <p className="text-3xl text-pink-500 font-bold mb-6">${product.price.toFixed(2)}</p>
+
+                    {/* Add the visitor counter component */}
+                    <VisitorCounter />
 
                     <div className="flex items-center space-x-4 mb-6">
                         <label htmlFor="quantity" className="font-bold">Quantity:</label>
