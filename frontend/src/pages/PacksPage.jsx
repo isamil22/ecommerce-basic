@@ -1,226 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getPackById, addToCart } from '../api/apiService';
+import { Link } from 'react-router-dom';
+import { getAllPacks } from '../api/apiService'; // Make sure this function exists in your apiService
 import Loader from '../components/Loader';
-import VisitorCounter from '../components/VisitorCounter'; // Import the component
 
-const PackDetailPage = () => {
-    const { id } = useParams();
-    const [pack, setPack] = useState(null);
+// A new component for displaying a single pack card
+const PackCard = ({ pack }) => {
+    const imageUrl = pack.imageUrl || 'https://placehold.co/600x400/fde4f2/E91E63?text=Our+Pack';
+
+    return (
+        <Link to={`/packs/${pack.id}`} className="block group border rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
+            <div className="overflow-hidden">
+                <img
+                    src={imageUrl}
+                    alt={pack.name}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+            </div>
+            <div className="p-4 bg-white">
+                <h3 className="text-xl font-bold text-gray-800 truncate">{pack.name}</h3>
+                <p className="text-gray-600 mt-2 h-20 overflow-hidden">{pack.description}</p>
+                <div className="flex justify-between items-center mt-4">
+                    <p className="text-2xl font-extrabold text-pink-500">${pack.price.toFixed(2)}</p>
+                    <span className="bg-pink-600 text-white font-semibold py-2 px-4 rounded-lg group-hover:bg-pink-700 transition-colors">
+                        View Details
+                    </span>
+                </div>
+            </div>
+        </Link>
+    );
+};
+
+
+const PacksPage = () => {
+    const [packs, setPacks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
-    const [selections, setSelections] = useState({});
-    const [initialSelections, setInitialSelections] = useState({});
-    const [composedImageUrl, setComposedImageUrl] = useState(null);
-    const [initialPackImageUrl, setInitialPackImageUrl] = useState('');
-
 
     useEffect(() => {
-        if (!pack || Object.keys(selections).length === 0) return;
-        const isDefaultSelection = JSON.stringify(selections) === JSON.stringify(initialSelections);
-
-        if (isDefaultSelection && initialPackImageUrl) {
-            setComposedImageUrl(initialPackImageUrl);
-            return;
-        }
-
-        const composeImage = async () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            const imageUrls = pack.items.map(item => {
-                const selectedProductId = selections[item.id];
-                const allProducts = [item.defaultProduct, ...item.variationProducts];
-                const selectedProduct = allProducts.find(p => p && p.id === selectedProductId);
-                return selectedProduct?.images?.[0] || null;
-            }).filter(Boolean);
-
-            if (imageUrls.length === 0) {
-                setComposedImageUrl(initialPackImageUrl);
-                return;
-            };
-
+        const fetchPacks = async () => {
             try {
-                const images = await Promise.all(imageUrls.map(url => {
-                    return new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.crossOrigin = "Anonymous";
-                        img.onload = () => resolve(img);
-                        img.onerror = (err) => reject(new Error(`Failed to load image: ${url}`));
-                        img.src = url;
-                    });
-                }));
-
-                let totalWidth = 0;
-                let maxHeight = 0;
-                images.forEach(img => {
-                    totalWidth += img.width;
-                    if (img.height > maxHeight) {
-                        maxHeight = img.height;
-                    }
-                });
-
-                canvas.width = totalWidth;
-                canvas.height = maxHeight;
-
-                let currentX = 0;
-                images.forEach(img => {
-                    ctx.drawImage(img, currentX, 0);
-                    currentX += img.width;
-                });
-
-                setComposedImageUrl(canvas.toDataURL('image/png'));
+                // Ensure getAllPacks function exists and fetches from '/api/packs'
+                const response = await getAllPacks();
+                setPacks(response.data);
             } catch (err) {
-                console.error("Image composition failed:", err);
-                setComposedImageUrl(initialPackImageUrl);
-            }
-        };
-
-        composeImage();
-
-    }, [selections, pack, initialPackImageUrl, initialSelections]);
-
-    useEffect(() => {
-        const fetchPack = async () => {
-            try {
-                const response = await getPackById(id);
-                const packData = response.data;
-                setPack(packData);
-                setComposedImageUrl(packData.imageUrl);
-                setInitialPackImageUrl(packData.imageUrl);
-
-                // --- FACEBOOK PIXEL: VIEWCONTENT EVENT ---
-                if (window.fbq) {
-                    window.fbq('track', 'ViewContent', {
-                        content_ids: [packData.id],
-                        content_name: packData.name,
-                        content_type: 'product_group',
-                        value: packData.price,
-                        currency: 'USD'
-                    });
-                }
-                // -----------------------------------------
-
-                const initial = {};
-                if (packData && packData.items) {
-                    packData.items.forEach(item => {
-                        if (item && item.defaultProduct) {
-                            initial[item.id] = item.defaultProduct.id;
-                        }
-                    });
-                }
-                setSelections(initial);
-                setInitialSelections(initial);
-            } catch (err) {
-                setError('Failed to fetch pack details. It might not exist.');
-                console.error(err);
+                console.error("Failed to fetch packs:", err);
+                setError('Could not load the available packs. Please try again later.');
             } finally {
                 setLoading(false);
             }
         };
-        fetchPack();
-    }, [id]);
 
-    const handleSelectionChange = (packItemId, selectedProductId) => {
-        setSelections(prev => ({ ...prev, [packItemId]: selectedProductId }));
-    };
+        fetchPacks();
+    }, []);
 
-    const handleReset = () => {
-        setSelections(initialSelections);
-        setComposedImageUrl(initialPackImageUrl);
-        setMessage('Selections have been reset to their default options.');
-        setError('');
-    };
+    if (loading) {
+        return <Loader />;
+    }
 
-    const handleAddToCart = async () => {
-        setMessage('');
-        setError('');
-        try {
-            const promises = Object.values(selections).map(productId => addToCart(productId, 1));
-            await Promise.all(promises);
-
-            // --- FACEBOOK PIXEL: ADD TO CART EVENT ---
-            if (window.fbq) {
-                window.fbq('track', 'AddToCart', {
-                    content_ids: Object.values(selections),
-                    content_name: pack.name,
-                    content_type: 'product_group',
-                    value: pack.price,
-                    currency: 'USD'
-                });
-            }
-            // -----------------------------------------
-
-            setMessage('All selected pack items have been added to your cart!');
-        } catch (err) {
-            setError('Failed to add items to cart. Please make sure you are logged in.');
-        }
-    };
-
-    if (loading) return <Loader />;
+    if (error) {
+        return <p className="text-center text-red-500 mt-10">{error}</p>;
+    }
 
     return (
         <div className="container mx-auto px-4 py-12">
-            {error && <p className="bg-red-100 text-red-700 p-3 rounded-md mb-4">{error}</p>}
-            {message && <p className="bg-green-100 text-green-700 p-3 rounded-md mb-4">{message}</p>}
+            <div className="text-center mb-12">
+                <h1 className="text-4xl font-extrabold text-gray-800">Explore Our Curated Packs</h1>
+                <p className="text-lg text-gray-600 mt-2">Get the best value with our specially selected product bundles.</p>
+            </div>
 
-            {!pack && !loading && <p className="text-center mt-10">Pack not found.</p>}
-
-            {pack && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    {/* Left Side: Pack Info & Image */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-lg shadow-xl">
-                            <img
-                                key={composedImageUrl}
-                                src={composedImageUrl || 'https://placehold.co/1200x600/fde4f2/E91E63?text=Our+Pack'}
-                                alt={pack.name}
-                                className="w-full h-auto object-cover rounded-lg mb-6"
-                            />
-                            <h1 className="text-4xl font-extrabold text-gray-800">{pack.name}</h1>
-                            <p className="text-3xl text-pink-500 font-bold my-3">
-                                ${(pack.price || 0).toFixed(2)}
-                            </p>
-                            <VisitorCounter />
-                            <p className="text-gray-600 leading-relaxed">{pack.description}</p>
-                        </div>
-                    </div>
-
-                    {/* Right Side: Customization Options */}
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                            Customize Your Pack
-                        </h2>
-                        <div className="space-y-4">
-                            {pack.items && pack.items.map(item => (
-                                <PackItemSelector
-                                    key={item.id}
-                                    item={item}
-                                    selectedProductId={selections[item.id]}
-                                    onSelectionChange={handleSelectionChange}
-                                />
-                            ))}
-                        </div>
-                        <div className="mt-8">
-                            <button
-                                onClick={handleAddToCart}
-                                className="w-full bg-pink-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-pink-700 transition duration-300"
-                            >
-                                Add Selections to Cart
-                            </button>
-                            <button
-                                onClick={handleReset}
-                                className="w-full mt-4 bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition duration-300"
-                            >
-                                Reset to Defaults
-                            </button>
-                        </div>
-                    </div>
+            {packs.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {packs.map(pack => (
+                        <PackCard key={pack.id} pack={pack} />
+                    ))}
                 </div>
+            ) : (
+                <p className="text-center text-gray-500 mt-10">No packs are available at the moment. Please check back soon!</p>
             )}
         </div>
     );
 };
 
-export default PackDetailPage;
+export default PacksPage;
