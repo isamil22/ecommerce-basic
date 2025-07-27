@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
@@ -35,15 +34,12 @@ import PackDetailPage from "./pages/PackDetailPage.jsx";
 import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
 import SettingsPage from './pages/admin/SettingsPage.jsx';
-
-// --- NEW IMPORTS START ---
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import FacebookPixel from './components/FacebookPixel.jsx';
 import AnalyticsTracker from './components/AnalyticsTracker.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
-// --- NEW IMPORTS END ---
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -63,7 +59,6 @@ function App() {
                 setCartCount(0);
             }
         } else {
-            // Guest cart logic: read from localStorage
             const guestCart = JSON.parse(localStorage.getItem('cart')) || { items: [] };
             const totalItems = guestCart.items.reduce((sum, item) => sum + item.quantity, 0);
             setCartCount(totalItems);
@@ -91,7 +86,7 @@ function App() {
         };
 
         checkAuthAndFetchRole();
-        fetchCartCount(); // Fetch count on load for both auth and guest users
+        fetchCartCount();
     }, [isAuthenticated]);
 
     const handleSetIsAuthenticated = (authStatus) => {
@@ -103,10 +98,17 @@ function App() {
 
     return (
         <BrowserRouter>
+            {/* AnnouncementBar is now outside the main layout div to allow it to be sticky */}
             <AnnouncementBar />
-            <FacebookPixel />
-            <AnalyticsTracker />
-            <div className="flex flex-col min-h-screen">
+
+            <div
+                className="flex flex-col min-h-screen"
+                // This style adjusts the top padding of the main content based on the
+                // CSS variable set by the AnnouncementBar component.
+                style={{ paddingTop: 'var(--announcement-bar-height, 0px)', transition: 'padding-top 0.3s ease' }}
+            >
+                <FacebookPixel />
+                <AnalyticsTracker />
                 <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={handleSetIsAuthenticated} userRole={userRole} cartCount={cartCount} />
                 <ToastContainer
                     position="bottom-right"
@@ -121,17 +123,14 @@ function App() {
                 />
                 <main className="flex-grow">
                     <Routes>
-                        {/* --- Public Routes --- */}
+                        {/* Public Routes */}
                         <Route path="/" element={<HomePage />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/packs" element={<PacksPage />} />
                         <Route path="/packs/:id" element={<PackDetailPage />} />
                         <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} isAuthenticated={isAuthenticated} />} />
                         <Route path="/hello" element={<HelloPage />} />
-                        <Route
-                            path="/auth"
-                            element={<AuthPage setIsAuthenticated={handleSetIsAuthenticated} />}
-                        />
+                        <Route path="/auth" element={<AuthPage setIsAuthenticated={handleSetIsAuthenticated} />} />
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                         <Route path="/confirm-email/:email" element={<EmailConfirmationPage />} />
@@ -139,12 +138,12 @@ function App() {
                         <Route path="/faq" element={<FaqPage />} />
                         <Route path="/shipping" element={<ShippingPage />} />
 
-                        {/* --- Authenticated User Routes --- */}
+                        {/* Authenticated User Routes */}
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/cart" element={<CartPage fetchCartCount={fetchCartCount} />} />
                         <Route path="/order" element={<OrderPage />} />
 
-                        {/* --- Admin-Only Routes --- */}
+                        {/* Admin-Only Routes */}
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
                             <Route path="hero" element={<AdminHeroPage />} />

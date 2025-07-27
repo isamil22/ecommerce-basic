@@ -22,6 +22,8 @@ public class AnnouncementService {
             defaultAnnouncement.setBackgroundColor("#ef4444");
             defaultAnnouncement.setTextColor("#ffffff");
             defaultAnnouncement.setAnimationType("none");
+            defaultAnnouncement.setSticky(false); // Default value
+            defaultAnnouncement.setFontWeight("normal"); // Default value
             return defaultAnnouncement;
         });
         return toDto(announcement);
@@ -34,7 +36,9 @@ public class AnnouncementService {
         announcement.setBackgroundColor(dto.getBackgroundColor());
         announcement.setTextColor(dto.getTextColor());
         announcement.setEnabled(dto.isEnabled());
-        announcement.setAnimationType(dto.getAnimationType()); // Update animation type
+        announcement.setAnimationType(dto.getAnimationType());
+        announcement.setSticky(dto.isSticky()); // Update sticky
+        announcement.setFontWeight(dto.getFontWeight()); // Update font weight
         Announcement savedAnnouncement = announcementRepository.save(announcement);
         return toDto(savedAnnouncement);
     }
@@ -45,7 +49,9 @@ public class AnnouncementService {
         dto.setBackgroundColor(announcement.getBackgroundColor());
         dto.setTextColor(announcement.getTextColor());
         dto.setEnabled(announcement.isEnabled());
-        dto.setAnimationType(announcement.getAnimationType()); // Map animation type
+        dto.setAnimationType(announcement.getAnimationType());
+        dto.setSticky(announcement.isSticky()); // Map sticky
+        dto.setFontWeight(announcement.getFontWeight()); // Map font weight
         return dto;
     }
 }

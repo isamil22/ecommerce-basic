@@ -8,5 +8,7 @@ public class AnnouncementDTO {
     private String backgroundColor;
     private String textColor;
     private boolean enabled;
-    private String animationType; // New field for animation
+    private String animationType;
+    private boolean isSticky; // New field for stickiness
+    private String fontWeight; // New field for font weight
 }
