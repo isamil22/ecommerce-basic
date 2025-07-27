@@ -293,3 +293,13 @@ export const getProductSuggestions = (query) => {
 };
 
 export default apiService;
+
+// ... existing functions
+
+export const getAnnouncement = () => {
+    return apiService.get('/announcement');
+};
+
+export const updateAnnouncement = (announcementData) => {
+    return apiService.put('/announcement', announcementData);
+};

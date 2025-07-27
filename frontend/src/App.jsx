@@ -39,8 +39,10 @@ import SettingsPage from './pages/admin/SettingsPage.jsx';
 // --- NEW IMPORTS START ---
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import FacebookPixel from './components/FacebookPixel.jsx';     // <-- ADD THIS LINE
-import AnalyticsTracker from './components/AnalyticsTracker.jsx'; // <-- ADD THIS LINE
+import FacebookPixel from './components/FacebookPixel.jsx';
+import AnalyticsTracker from './components/AnalyticsTracker.jsx';
+import AnnouncementBar from './components/AnnouncementBar.jsx';
+import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
 // --- NEW IMPORTS END ---
 
 function App() {
@@ -101,10 +103,9 @@ function App() {
 
     return (
         <BrowserRouter>
-            {/* --- ADD THESE TWO COMPONENTS --- */}
+            <AnnouncementBar />
             <FacebookPixel />
             <AnalyticsTracker />
-            {/* ---------------------------------- */}
             <div className="flex flex-col min-h-screen">
                 <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={handleSetIsAuthenticated} userRole={userRole} cartCount={cartCount} />
                 <ToastContainer
@@ -125,7 +126,6 @@ function App() {
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/packs" element={<PacksPage />} />
                         <Route path="/packs/:id" element={<PackDetailPage />} />
-                        {/* Pass isAuthenticated to ProductDetailPage */}
                         <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} isAuthenticated={isAuthenticated} />} />
                         <Route path="/hello" element={<HelloPage />} />
                         <Route
@@ -161,6 +161,7 @@ function App() {
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
                             <Route path="coupons" element={<AdminCouponsPage />} />
+                            <Route path="announcement" element={<AdminAnnouncementPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
                     </Routes>

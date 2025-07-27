@@ -60,7 +60,9 @@ public class SecurityConfig {
                                 "/api/packs/**",
                                 "/api/hero",
                                 "/api/comments/product/**",
-                                "/api/settings"
+                                "/api/settings",
+                                "/api/announcement" // Add this line
+
                         )
                         .permitAll()
                         .requestMatchers("/", "/index.html", "/images/**", "/vite.svg").permitAll()
