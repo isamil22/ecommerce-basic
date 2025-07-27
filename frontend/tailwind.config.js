@@ -6,7 +6,6 @@ export default {
   ],
   theme: {
     extend: {
-      // Defines the keyframes for our custom animation
       keyframes: {
         nudge: {
           '0%, 100%': { transform: 'translateX(0)' },
@@ -14,12 +13,22 @@ export default {
           '40%': { transform: 'translateX(5px)' },
           '60%': { transform: 'translateX(-3px)' },
           '80%': { transform: 'translateX(3px)' },
+        },
+        // --- NEW ANIMATIONS ---
+        pulse: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.2)' },
+        },
+        fade: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         }
       },
-      // Creates the utility class for the animation
       animation: {
-        // MODIFICATION: Added 'infinite' to make the animation loop continuously.
-        nudge: 'nudge 1.5s ease-in-out infinite',
+        nudge: 'nudge 1.5s ease-in-out',
+        // --- NEW ANIMATION UTILITIES ---
+        'eye-pulse': 'pulse 2s ease-in-out infinite',
+        'number-fade': 'fade 0.5s ease-in-out',
       }
     },
   },

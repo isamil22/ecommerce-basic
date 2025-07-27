@@ -34,6 +34,7 @@ import PackDetailPage from "./pages/PackDetailPage.jsx";
 import AdminPackEditPage from './pages/admin/AdminPackEditPage.jsx';
 import AdminCouponsPage from './pages/admin/AdminCouponsPage.jsx';
 import SettingsPage from './pages/admin/SettingsPage.jsx';
+import VisitorCounterSettingsPage from './pages/admin/vistorcountsetting.jsx';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import FacebookPixel from './components/FacebookPixel.jsx';
@@ -161,6 +162,7 @@ function App() {
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
                             <Route path="coupons" element={<AdminCouponsPage />} />
                             <Route path="announcement" element={<AdminAnnouncementPage />} />
+                            <Route path="vistorcountsetting" element={<VisitorCounterSettingsPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
                     </Routes>

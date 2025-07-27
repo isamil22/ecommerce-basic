@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPackById, addToCart } from '../api/apiService';
 import Loader from '../components/Loader';
+import VisitorCounter from '../components/VisitorCounter.jsx';
 
 const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChange, isDefault }) => {
     const imageUrl = (product.images && product.images.length > 0)
@@ -260,6 +261,7 @@ const PackDetailPage = () => {
                             <p className="text-3xl text-pink-500 font-bold my-3">
                                 ${(pack.price || 0).toFixed(2)}
                             </p>
+                            <VisitorCounter />
                             <p className="text-gray-600 leading-relaxed">{pack.description}</p>
                         </div>
                     </div>
