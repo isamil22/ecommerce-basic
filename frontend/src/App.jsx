@@ -41,6 +41,7 @@ import FacebookPixel from './components/FacebookPixel.jsx';
 import AnalyticsTracker from './components/AnalyticsTracker.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
+import AdminCountdownPage from './pages/admin/AdminCountdownPage.jsx';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -99,13 +100,10 @@ function App() {
 
     return (
         <BrowserRouter>
-            {/* AnnouncementBar is now outside the main layout div to allow it to be sticky */}
             <AnnouncementBar />
 
             <div
                 className="flex flex-col min-h-screen"
-                // This style adjusts the top padding of the main content based on the
-                // CSS variable set by the AnnouncementBar component.
                 style={{ paddingTop: 'var(--announcement-bar-height, 0px)', transition: 'padding-top 0.3s ease' }}
             >
                 <FacebookPixel />
@@ -162,6 +160,7 @@ function App() {
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
                             <Route path="coupons" element={<AdminCouponsPage />} />
                             <Route path="announcement" element={<AdminAnnouncementPage />} />
+                            <Route path="countdown" element={<AdminCountdownPage />} />
                             <Route path="vistorcountsetting" element={<VisitorCounterSettingsPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>

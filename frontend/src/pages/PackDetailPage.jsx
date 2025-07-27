@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getPackById, addToCart } from '../api/apiService';
 import Loader from '../components/Loader';
 import VisitorCounter from '../components/VisitorCounter.jsx';
+import CountdownBar from '../components/CountdownBar';
 
 const ProductOption = ({ product, packItemId, selectedProductId, onSelectionChange, isDefault }) => {
     const imageUrl = (product.images && product.images.length > 0)
@@ -241,6 +242,7 @@ const PackDetailPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-12">
+            <CountdownBar />
             {error && <p className="bg-red-100 text-red-700 p-3 rounded-md mb-4">{error}</p>}
             {message && <p className="bg-green-100 text-green-700 p-3 rounded-md mb-4">{message}</p>}
 

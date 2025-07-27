@@ -292,8 +292,6 @@ export const getProductSuggestions = (query) => {
     return apiService.get('/products/suggestions', { params: { query } });
 };
 
-export default apiService;
-
 // ... existing functions
 
 export const getAnnouncement = () => {
@@ -303,3 +301,13 @@ export const getAnnouncement = () => {
 export const updateAnnouncement = (announcementData) => {
     return apiService.put('/announcement', announcementData);
 };
+
+export const getCountdown = () => {
+    return apiService.get('/countdown');
+};
+
+export const saveCountdown = (countdownData) => {
+    return apiService.post('/countdown', countdownData);
+};
+
+export default apiService;

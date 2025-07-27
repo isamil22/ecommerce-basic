@@ -39,6 +39,9 @@ const AdminSidebar = () => {
                 <NavLink to="/admin/announcement" className={({ isActive }) => `block py-2.5 px-4 rounded transition duration-200 ${isActive ? activeLinkClass : inactiveLinkClass}`}>
                     Announcement
                 </NavLink>
+                <NavLink to="/admin/countdown" className={({ isActive }) => `block py-2.5 px-4 rounded transition duration-200 ${isActive ? activeLinkClass : inactiveLinkClass}`}>
+                    Countdown
+                </NavLink>
                 <NavLink to="/admin/vistorcountsetting" className={({ isActive }) => `block py-2.5 px-4 rounded transition duration-200 ${isActive ? activeLinkClass : inactiveLinkClass}`}>
                     Visitor Counter
                 </NavLink>

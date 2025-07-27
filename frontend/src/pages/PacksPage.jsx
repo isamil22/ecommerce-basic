@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllPacks } from '../api/apiService'; // Make sure this function exists in your apiService
 import Loader from '../components/Loader';
+import CountdownBar from '../components/CountdownBar';
 
 // A new component for displaying a single pack card
 const PackCard = ({ pack }) => {
@@ -63,6 +64,7 @@ const PacksPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-12">
+            <CountdownBar />
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-extrabold text-gray-800">Explore Our Curated Packs</h1>
                 <p className="text-lg text-gray-600 mt-2">Get the best value with our specially selected product bundles.</p>

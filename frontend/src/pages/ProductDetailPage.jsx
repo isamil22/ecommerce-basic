@@ -6,6 +6,7 @@ import Loader from '../components/Loader';
 import CommentForm from '../components/CommentForm';
 import ProductSlider from '../components/ProductSlider';
 import VisitorCounter from '../components/VisitorCounter.jsx';
+import CountdownBar from '../components/CountdownBar';
 
 const ProductDetailPage = ({ fetchCartCount, isAuthenticated }) => {
     const { id } = useParams();
@@ -153,6 +154,7 @@ const ProductDetailPage = ({ fetchCartCount, isAuthenticated }) => {
 
     return (
         <div className="container mx-auto px-4 py-12">
+            <CountdownBar />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                 {/* Image Gallery Section */}
                 <div>
