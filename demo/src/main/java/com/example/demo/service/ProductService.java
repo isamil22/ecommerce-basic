@@ -1,12 +1,10 @@
 // demo/src/main/java/com/example/demo/service/ProductService.java
-
 package com.example.demo.service;
 
 import com.example.demo.dto.ProductDTO;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.mapper.ProductMapper;
-import com.example.demo.model.Category;
-import com.example.demo.model.Product;
+import com.example.demo.model.*;
 import com.example.demo.repositories.CategoryRepository;
 import com.example.demo.repositories.ProductRepository;
 import com.example.demo.specification.ProductSpecification;
@@ -49,8 +47,6 @@ public class ProductService {
         Category category = categoryRepository.findById(productDTO.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + productDTO.getCategoryId()));
         product.setCategory(category);
-
-        // **FIX**: Manually set the type to ensure it's saved correctly.
         product.setType(productDTO.getType());
 
         if (images != null && !images.isEmpty()) {
@@ -59,6 +55,11 @@ public class ProductService {
         } else {
             product.setImages(new ArrayList<>());
         }
+
+        // --- MODIFICATION START ---
+        // Delegate variant processing to the new helper method.
+        updateVariantsForProduct(product, productDTO);
+        // --- MODIFICATION END ---
 
         Product savedProduct = productRepository.save(product);
         return productMapper.toDTO(savedProduct);
@@ -69,16 +70,8 @@ public class ProductService {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
-        existingProduct.setName(productDTO.getName());
-        existingProduct.setDescription(productDTO.getDescription());
-        existingProduct.setPrice(productDTO.getPrice());
-        existingProduct.setQuantity(productDTO.getQuantity());
-        existingProduct.setBrand(productDTO.getBrand());
-        existingProduct.setBestseller(productDTO.isBestseller());
-        existingProduct.setNewArrival(productDTO.isNewArrival());
-
-        // **FIX**: Ensure the type is updated.
-        existingProduct.setType(productDTO.getType());
+        // Use the mapper to update basic fields from the DTO.
+        productMapper.updateProductFromDto(productDTO, existingProduct);
 
         if (!existingProduct.getCategory().getId().equals(productDTO.getCategoryId())) {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
@@ -92,8 +85,51 @@ public class ProductService {
             existingProduct.getImages().addAll(imageUrls);
         }
 
+        // --- MODIFICATION START ---
+        // Reuse the helper method for updates to ensure consistency.
+        updateVariantsForProduct(existingProduct, productDTO);
+        // --- MODIFICATION END ---
+
         Product updatedProduct = productRepository.save(existingProduct);
         return productMapper.toDTO(updatedProduct);
+    }
+
+    // --- NEW HELPER METHOD ---
+    private void updateVariantsForProduct(Product product, ProductDTO productDTO) {
+        // Clear existing variant data to prevent duplicates and ensure a clean update.
+        product.getVariantTypes().clear();
+        if (productDTO.getVariantTypes() != null) {
+            productDTO.getVariantTypes().forEach(vtDto -> {
+                VariantType variantType = new VariantType();
+                variantType.setName(vtDto.getName());
+                variantType.setProduct(product);
+
+                List<VariantOption> options = new ArrayList<>();
+                if (vtDto.getOptions() != null) {
+                    vtDto.getOptions().forEach(optionValue -> {
+                        VariantOption option = new VariantOption();
+                        option.setValue(optionValue);
+                        option.setVariantType(variantType);
+                        options.add(option);
+                    });
+                }
+                variantType.setOptions(options);
+                product.getVariantTypes().add(variantType);
+            });
+        }
+
+        product.getVariants().clear();
+        if (productDTO.getVariants() != null) {
+            productDTO.getVariants().forEach(pvDto -> {
+                ProductVariant productVariant = new ProductVariant();
+                productVariant.setProduct(product);
+                productVariant.setVariantMap(pvDto.getVariantMap());
+                productVariant.setPrice(pvDto.getPrice());
+                productVariant.setStock(pvDto.getStock());
+                productVariant.setImageUrl(pvDto.getImageUrl());
+                product.getVariants().add(productVariant);
+            });
+        }
     }
 
     public String uploadAndGetImageUrl(MultipartFile image) throws IOException {
@@ -112,13 +148,8 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * UPDATED: Fetches products based on filter criteria using Specification
-     * and returns a paginated result.
-     */
     @Transactional(readOnly = true)
     public Page<ProductDTO> getAllProducts(String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, String type, Pageable pageable) {
-        // **FIX**: Added the 'type' parameter to the specification query.
         Specification<Product> spec = productSpecification.getProducts(search, minPrice, maxPrice, brand, bestseller, newArrival, categoryId, type);
         return productRepository.findAll(spec, pageable)
                 .map(productMapper::toDTO);

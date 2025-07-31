@@ -1,5 +1,3 @@
-// demo/src/main/java/com/example/demo/model/Product.java
-
 package com.example.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -7,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +17,7 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
 
     @Lob
@@ -47,7 +45,16 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    // ---MODIFICATION HERE---
+    // --- MODIFICATION START ---
+    @JsonManagedReference
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VariantType> variantTypes = new ArrayList<>();
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariant> variants = new ArrayList<>();
+    // --- MODIFICATION END ---
+
     public enum ProductType {
         MEN, WOMEN, BOTH
     }

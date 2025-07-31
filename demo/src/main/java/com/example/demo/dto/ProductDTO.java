@@ -1,3 +1,4 @@
+// demo/src/main/java/com/example/demo/dto/ProductDTO.java
 package com.example.demo.dto;
 
 import com.example.demo.model.Product;
@@ -30,21 +31,18 @@ public class ProductDTO {
     private Integer quantity;
 
     private List<String> images;
-
     private List<CommentDTO> comments;
-
-    @NotBlank(message = "Brand is required")
     private String brand;
-
     private boolean bestseller;
-
     private boolean newArrival;
 
     @NotNull(message = "Category ID is required for a product")
     private Long categoryId;
 
     private String categoryName;
-
-    // This is the added field for gender filtering
     private Product.ProductType type;
+
+    // These fields will now correctly reference the public DTO classes
+    private List<VariantTypeDto> variantTypes;
+    private List<ProductVariantDto> variants;
 }
