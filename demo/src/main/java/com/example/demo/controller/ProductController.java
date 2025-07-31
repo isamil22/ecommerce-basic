@@ -3,6 +3,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.ProductDTO;
+import com.example.demo.dto.ProductVariantDto;
 import com.example.demo.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -101,5 +102,12 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/variants")
+    public ResponseEntity<List<ProductVariantDto>> getProductVariants(@PathVariable Long id) {
+        // You would need to add a 'getProductVariants' method to your service
+        List<ProductVariantDto> variants = productService.getProductVariants(id);
+        return ResponseEntity.ok(variants);
     }
 }
