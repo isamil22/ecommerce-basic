@@ -1,10 +1,9 @@
-// demo/src/main/java/com/example/demo/controller/ProductController.java
-
 package com.example.demo.controller;
 
 import com.example.demo.dto.ProductDTO;
 import com.example.demo.dto.ProductVariantDto;
 import com.example.demo.service.ProductService;
+import com.fasterxml.jackson.databind.ObjectMapper; // Import ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,28 +26,46 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    // Add an ObjectMapper instance to manually handle JSON deserialization
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * Creates a new product with optional images. The product data is sent as a JSON string
+     * to avoid Content-Type issues with multipart requests from clients like Swagger.
+     */
     @PostMapping(consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> addProduct(
-            @RequestPart("product") ProductDTO productDTO,
+            @RequestPart("product") String productJson, // Changed from ProductDTO to String
             @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+
+        // Manually deserialize the JSON string to a ProductDTO
+        ProductDTO productDTO = objectMapper.readValue(productJson, ProductDTO.class);
+
         ProductDTO newProduct = productService.createProductWithImages(productDTO, images);
         return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
+    }
+
+    /**
+     * Updates an existing product with optional new images. The product data is sent as a JSON string.
+     */
+    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductDTO> updateProduct(
+            @PathVariable Long id,
+            @RequestPart("product") String productJson, // Changed from ProductDTO to String
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+
+        // Manually deserialize the JSON string to a ProductDTO
+        ProductDTO productDTO = objectMapper.readValue(productJson, ProductDTO.class);
+
+        ProductDTO updatedProduct = productService.updateProductWithImages(id, productDTO, images);
+        return ResponseEntity.ok(updatedProduct);
     }
 
     @GetMapping("/suggestions")
     public ResponseEntity<List<String>> getProductSuggestions(@RequestParam String query) {
         return ResponseEntity.ok(productService.getProductSuggestions(query));
-    }
-
-    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDTO> updateProduct(
-            @PathVariable Long id,
-            @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-        ProductDTO updatedProduct = productService.updateProductWithImages(id, productDTO, images);
-        return ResponseEntity.ok(updatedProduct);
     }
 
     @PostMapping("/description-image")
