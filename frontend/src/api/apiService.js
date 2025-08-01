@@ -304,3 +304,5 @@ export const getCountdown = () => {
 export const saveCountdown = (countdownData) => {
     return apiService.post('/countdown', countdownData);
 };
+
+export default apiService;
