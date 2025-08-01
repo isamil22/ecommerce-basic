@@ -1,232 +1,320 @@
 import React, { useState, useEffect } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { createProduct, updateProduct, getProductById, uploadDescriptionImage, getAllCategories } from '../../api/apiService';
-import Loader from '../../components/Loader';
+import { useParams, useNavigate } from 'react-router-dom';
+// --- CORRECTED IMPORTS ---
+import { getAllCategories, getProductById, createProduct, updateProduct } from '../../api/apiService';
+import AWSService from '../../api/awsService'; // Corrected path
 
 const AdminProductForm = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+
     const [product, setProduct] = useState({
         name: '',
         description: '',
         price: '',
-        categoryId: '',
         quantity: '',
         brand: '',
+        categoryId: '',
+        type: 'BOTH',
         bestseller: false,
         newArrival: false,
-        type: '', // Added type to the initial state
+        hasVariants: false,
+        variantTypes: [],
+        variants: []
     });
     const [images, setImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
-    const { id } = useParams();
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const { data } = await getAllCategories();
-                setCategories(data);
-            } catch (err) {
-                console.error("Failed to fetch categories", err);
-                setError("Failed to load product categories. Please try again.");
+                // Now using the imported function correctly
+                const response = await getAllCategories();
+                setCategories(response.data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
             }
         };
-        fetchCategories();
-    }, []);
 
-    useEffect(() => {
-        if (id) {
-            const fetchProduct = async () => {
-                setLoading(true);
+        const fetchProduct = async () => {
+            if (id) {
                 try {
-                    const { data } = await getProductById(id);
+                    // Now using the imported function correctly
+                    const response = await getProductById(id);
+                    const productData = response.data;
                     setProduct({
-                        name: data.name || '',
-                        description: data.description || '',
-                        price: data.price || '',
-                        categoryId: data.categoryId || '',
-                        quantity: data.quantity || '',
-                        brand: data.brand || '',
-                        bestseller: data.bestseller || false,
-                        newArrival: data.newArrival || false,
-                        type: data.type || '', // Make sure to fetch and set the type
+                        ...productData,
+                        variantTypes: productData.variantTypes.map(vt => ({...vt, options: vt.options.join(', ')})),
+                        variants: productData.variants || []
                     });
-                } catch (err) {
-                    setError(err.response?.data?.message || err.message);
-                } finally {
-                    setLoading(false);
+                    setImagePreviews(productData.images || []);
+                } catch (error) {
+                    console.error('Error fetching product:', error);
                 }
-            };
-            fetchProduct();
-        }
+            }
+        };
+
+        fetchCategories();
+        fetchProduct();
     }, [id]);
 
-    const handleChange = (e) => {
+    const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setProduct((prev) => ({
+        setProduct(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value,
+            [name]: type === 'checkbox' ? checked : value
         }));
     };
 
-    const handleDescriptionChange = (content) => {
-        setProduct((prev) => ({ ...prev, description: content }));
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        setImages(files);
+        const previews = files.map(file => URL.createObjectURL(file));
+        setImagePreviews(previews);
     };
 
-    const handleImageChange = (e) => {
-        setImages(e.target.files);
+    // --- All variant handling functions remain the same ---
+    const handleVariantTypeChange = (index, field, value) => {
+        const updatedVariantTypes = [...product.variantTypes];
+        updatedVariantTypes[index][field] = value;
+        setProduct({ ...product, variantTypes: updatedVariantTypes });
     };
+
+    const addVariantType = () => {
+        setProduct({
+            ...product,
+            variantTypes: [...product.variantTypes, { name: '', options: '' }]
+        });
+    };
+
+    const removeVariantType = (index) => {
+        const updatedVariantTypes = product.variantTypes.filter((_, i) => i !== index);
+        setProduct({ ...product, variantTypes: updatedVariantTypes });
+    };
+
+    const addVariant = () => {
+        const newVariant = { variantMap: {}, price: '', stock: '' };
+        product.variantTypes.forEach(vt => {
+            newVariant.variantMap[vt.name] = vt.options.split(',')[0]?.trim() || '';
+        });
+        setProduct({ ...product, variants: [...product.variants, newVariant] });
+    };
+
+    const handleVariantChange = (index, field, value) => {
+        const updatedVariants = [...product.variants];
+        updatedVariants[index][field] = value;
+        setProduct({ ...product, variants: updatedVariants });
+    };
+
+    const handleVariantMapChange = (index, name, value) => {
+        const updatedVariants = [...product.variants];
+        updatedVariants[index].variantMap[name] = value;
+        setProduct({ ...product, variants: updatedVariants });
+    };
+
+    const removeVariant = (index) => {
+        const updatedVariants = product.variants.filter((_, i) => i !== index);
+        setProduct({ ...product, variants: updatedVariants });
+    };
+    // --- End of variant handling functions ---
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        const formData = new FormData();
-        formData.append('product', new Blob([JSON.stringify(product)], { type: 'application/json' }));
-
-        if (images.length > 0) {
-            for (let i = 0; i < images.length; i++) {
-                formData.append('images', images[i]);
-            }
-        }
-
         try {
+            const uploadedImageUrls = await Promise.all(
+                images.map(image => AWSService.uploadFile(image))
+            );
+
+            const productData = { ...product, images: [...imagePreviews, ...uploadedImageUrls] };
+
+            if (product.hasVariants) {
+                productData.variantTypes = product.variantTypes.map(vt => ({
+                    ...vt,
+                    options: vt.options.split(',').map(o => o.trim())
+                }));
+            } else {
+                productData.variantTypes = [];
+                productData.variants = [];
+            }
+
+            const formData = new FormData();
+            const blob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
+            formData.append('product', blob);
+
+            images.forEach(image => {
+                formData.append('images', image);
+            });
+
             if (id) {
                 await updateProduct(id, formData);
             } else {
                 await createProduct(formData);
             }
             navigate('/admin/products');
-        } catch (err) {
-            setError(err.response?.data?.message || 'An error occurred during submission.');
-            console.error(err);
-        } finally {
-            setLoading(false);
+        } catch (error) {
+            console.error('Error saving product:', error);
         }
     };
 
-    const handleImageUpload = (blobInfo) => new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('image', blobInfo.blob(), blobInfo.filename());
-        uploadDescriptionImage(formData)
-            .then((response) => {
-                if (response.data && response.data.url) {
-                    resolve(response.data.url);
-                } else {
-                    reject('Invalid JSON response');
-                }
-            })
-            .catch((error) => {
-                reject(`Image upload failed: ${error.message}`);
-            });
-    });
-
-    if (loading && id) {
-        return <Loader />;
-    }
-
     return (
-        <div className="p-6">
-            <h1 className="text-3xl font-bold mb-6">{id ? 'Edit Product' : 'Create Product'}</h1>
-            <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-                {error && <p className="text-red-500 text-center bg-red-100 p-3 rounded-md">{error}</p>}
+        <div className="container mt-4">
+            <h2>{id ? 'Edit Product' : 'Add Product'}</h2>
+            <form onSubmit={handleSubmit}>
+                {/* Standard product fields */}
+                <div className="mb-3">
+                    <label htmlFor="name" className="form-label">Name</label>
+                    <input type="text" className="form-control" id="name" name="name" value={product.name} onChange={handleInputChange} required />
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Name */}
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" id="name" name="name" value={product.name} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                <div className="mb-3">
+                    <label htmlFor="description" className="form-label">Description</label>
+                    <textarea className="form-control" id="description" name="description" value={product.description} onChange={handleInputChange} required />
+                </div>
+
+                <div className="row">
+                    <div className="col-md-6 mb-3">
+                        <label htmlFor="price" className="form-label">Price</label>
+                        <input type="number" className="form-control" id="price" name="price" value={product.price} onChange={handleInputChange} required />
                     </div>
-
-                    {/* Brand */}
-                    <div>
-                        <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand</label>
-                        <input type="text" id="brand" name="brand" value={product.brand} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                    <div className="col-md-6 mb-3">
+                        <label htmlFor="quantity" className="form-label">Stock Quantity</label>
+                        <input type="number" className="form-control" id="quantity" name="quantity" value={product.quantity} onChange={handleInputChange} required />
                     </div>
+                </div>
 
-                    {/* Price */}
-                    <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
-                        <input type="number" step="0.01" id="price" name="price" value={product.price} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                <div className="row">
+                    <div className="col-md-6 mb-3">
+                        <label htmlFor="brand" className="form-label">Brand</label>
+                        <input type="text" className="form-control" id="brand" name="brand" value={product.brand} onChange={handleInputChange} />
                     </div>
-
-                    {/* Stock Quantity */}
-                    <div>
-                        <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
-                        <input type="number" id="quantity" name="quantity" value={product.quantity} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
-                    </div>
-
-                    {/* Category */}
-                    <div>
-                        <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">Category</label>
-                        <select id="categoryId" name="categoryId" value={product.categoryId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
-                            <option value="">-- Select a Category --</option>
-                            {categories.map(category => (
-                                <option key={category.id} value={category.id}>
-                                    {category.name}
-                                </option>
+                    <div className="col-md-6 mb-3">
+                        <label htmlFor="categoryId" className="form-label">Category</label>
+                        <select className="form-control" id="categoryId" name="categoryId" value={product.categoryId} onChange={handleInputChange} required>
+                            <option value="">Select a category</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
                             ))}
                         </select>
                     </div>
-                    {/* Product Type */}
-                    <div>
-                        <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
-                        <select id="type" name="type" value={product.type} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
-                            <option value="">-- Select Type --</option>
-                            <option value="MEN">Men</option>
-                            <option value="WOMEN">Women</option>
-                            <option value="BOTH">Both</option>
-                        </select>
+                </div>
+
+                <div className="mb-3">
+                    <label htmlFor="type" className="form-label">Type</label>
+                    <select className="form-control" id="type" name="type" value={product.type} onChange={handleInputChange}>
+                        <option value="MEN">Men</option>
+                        <option value="WOMEN">Women</option>
+                        <option value="BOTH">Both</option>
+                    </select>
+                </div>
+
+                <div className="mb-3 form-check">
+                    <input type="checkbox" className="form-check-input" id="bestseller" name="bestseller" checked={product.bestseller} onChange={handleInputChange} />
+                    <label className="form-check-label" htmlFor="bestseller">Bestseller</label>
+                </div>
+
+                <div className="mb-3 form-check">
+                    <input type="checkbox" className="form-check-input" id="newArrival" name="newArrival" checked={product.newArrival} onChange={handleInputChange} />
+                    <label className="form-check-label" htmlFor="newArrival">New Arrival</label>
+                </div>
+
+                <div className="mb-3 form-check">
+                    <input type="checkbox" className="form-check-input" id="hasVariants" name="hasVariants" checked={product.hasVariants} onChange={handleInputChange} />
+                    <label className="form-check-label" htmlFor="hasVariants">Has Variants</label>
+                </div>
+
+                {/* Variant Types Section */}
+                {product.hasVariants && (
+                    <div className="card mb-4">
+                        <div className="card-header">
+                            <h4>Variant Types</h4>
+                        </div>
+                        <div className="card-body">
+                            {product.variantTypes.map((vt, index) => (
+                                <div key={index} className="row g-3 align-items-center mb-3 p-2 border rounded">
+                                    <div className="col-md-5">
+                                        <label className="form-label">Type Name</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="e.g., Size"
+                                            value={vt.name}
+                                            onChange={(e) => handleVariantTypeChange(index, 'name', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="col-md-5">
+                                        <label className="form-label">Options (comma-separated)</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="e.g., S, M, L"
+                                            value={vt.options}
+                                            onChange={(e) => handleVariantTypeChange(index, 'options', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="col-md-2 d-flex align-items-end">
+                                        <button type="button" className="btn btn-danger" onClick={() => removeVariantType(index)}>Remove</button>
+                                    </div>
+                                </div>
+                            ))}
+                            <button type="button" className="btn btn-primary" onClick={addVariantType}>Add Variant Type</button>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Description Editor */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <Editor
-                        apiKey="jeqjwyja4t9lzd3h889y31tf98ag6a1kp16xfns173v9cgr0"
-                        value={product.description}
-                        onEditorChange={handleDescriptionChange}
-                        init={{
-                            height: 350,
-                            menubar: false,
-                            plugins: ['advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'help', 'wordcount'],
-                            toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image | help',
-                            images_upload_handler: handleImageUpload,
-                            automatic_uploads: true,
-                            file_picker_types: 'image',
-                            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-                        }}
-                    />
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                    <label htmlFor="images" className="block text-sm font-medium text-gray-700">Product Images</label>
-                    <input type="file" id="images" name="images" multiple onChange={handleImageChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
-                </div>
-
-                {/* Checkboxes */}
-                <div className="flex items-center space-x-8">
-                    <div className="flex items-center">
-                        <input type="checkbox" id="bestseller" name="bestseller" checked={product.bestseller} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
-                        <label htmlFor="bestseller" className="ml-2 block text-sm text-gray-900">Mark as Bestseller</label>
+                {/* Variants Section */}
+                {product.hasVariants && product.variantTypes.length > 0 && (
+                    <div className="card">
+                        <div className="card-header">
+                            <h4>Product Variants</h4>
+                        </div>
+                        <div className="card-body">
+                            {product.variants.map((variant, index) => (
+                                <div key={index} className="row g-3 align-items-center mb-3 p-2 border rounded">
+                                    {product.variantTypes.map(vt => (
+                                        <div className="col-md-3" key={vt.name}>
+                                            <label className="form-label">{vt.name}</label>
+                                            <select
+                                                className="form-select"
+                                                value={variant.variantMap[vt.name]}
+                                                onChange={(e) => handleVariantMapChange(index, vt.name, e.target.value)}
+                                            >
+                                                {(vt.options.split(',') || []).map(opt => (
+                                                    <option key={opt.trim()} value={opt.trim()}>{opt.trim()}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                    <div className="col-md-2">
+                                        <label className="form-label">Price</label>
+                                        <input type="number" className="form-control" value={variant.price} onChange={(e) => handleVariantChange(index, 'price', e.target.value)} />
+                                    </div>
+                                    <div className="col-md-2">
+                                        <label className="form-label">Stock</label>
+                                        <input type="number" className="form-control" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', e.target.value)} />
+                                    </div>
+                                    <div className="col-md-2 d-flex align-items-end">
+                                        <button type="button" className="btn btn-danger" onClick={() => removeVariant(index)}>Remove</button>
+                                    </div>
+                                </div>
+                            ))}
+                            <button type="button" className="btn btn-success" onClick={addVariant}>Add Variant</button>
+                        </div>
                     </div>
-                    <div className="flex items-center">
-                        <input type="checkbox" id="newArrival" name="newArrival" checked={product.newArrival} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
-                        <label htmlFor="newArrival" className="ml-2 block text-sm text-gray-900">Mark as New Arrival</label>
-                    </div>
+                )}
+
+                <div className="mb-3">
+                    <label htmlFor="images" className="form-label">Images</label>
+                    <input type="file" className="form-control" id="images" name="images" onChange={handleImageChange} multiple />
                 </div>
 
-                {/* Submit Button */}
-                <div>
-                    <button type="submit" className="w-full bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500" disabled={loading}>
-                        {loading ? 'Saving...' : (id ? 'Update Product' : 'Create Product')}
-                    </button>
+                <div className="d-flex flex-wrap">
+                    {imagePreviews.map((preview, index) => (
+                        <img key={index} src={preview} alt="Product preview" className="img-thumbnail" style={{ width: '100px', height: '100px', objectFit: 'cover', margin: '5px' }} />
+                    ))}
                 </div>
+
+                <button type="submit" className="btn btn-primary mt-4">{id ? 'Update Product' : 'Add Product'}</button>
             </form>
         </div>
     );

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiService = axios.create({
-    baseURL: '/api', // Use the relative path for the proxy
+    baseURL: '/api',
 });
 
 apiService.interceptors.request.use(config => {
@@ -14,7 +14,17 @@ apiService.interceptors.request.use(config => {
     return Promise.reject(error);
 });
 
-// --- Existing Functions ---
+const handleMultipartFormData = (method, url, data) => {
+    return apiService({
+        method: method,
+        url: url,
+        data: data,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+
 export const getAllProducts = (params) => {
     return apiService.get('/products', { params });
 };
@@ -55,10 +65,9 @@ export const removeCartItem = (productId) => {
     return apiService.delete(`/cart/${productId}`);
 };
 
-export const addToCart = (productId, quantity) => {
-    return apiService.post(`/cart/add?productId=${productId}&quantity=${quantity}`);
+export const addToCart = (productId, quantity, productVariantId) => {
+    return apiService.post(`/cart/add`, { productId, quantity, productVariantId });
 };
-
 
 export const getUserOrders = () => {
     return apiService.get('/orders/user');
@@ -72,8 +81,10 @@ export const getNewArrivals = () => {
     return apiService.get('/products/new-arrivals');
 };
 
-// --- ADMIN FUNCTIONS ---
 export const createProduct = (productData) => {
+    if (productData instanceof FormData) {
+        return handleMultipartFormData('post', '/products', productData);
+    }
     return apiService.post('/products', productData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -82,6 +93,9 @@ export const createProduct = (productData) => {
 };
 
 export const updateProduct = (id, productData) => {
+    if (productData instanceof FormData) {
+        return handleMultipartFormData('put', `/products/${id}`, productData);
+    }
     return apiService.put(`/products/${id}`, productData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -93,7 +107,6 @@ export const deleteProduct = (id) => {
     return apiService.delete(`/products/${id}`);
 };
 
-// --- CATEGORY API FUNCTIONS ---
 export const getAllCategories = () => {
     return apiService.get('/categories');
 };
@@ -122,7 +135,6 @@ export const updateOrderStatus = (orderId, status) => {
     return apiService.put(`/orders/${orderId}/status?status=${status}`);
 };
 
-// --- USER MANAGEMENT ADMIN FUNCTIONS ---
 export const getAllUsers = () => {
     return apiService.get('/users');
 };
@@ -135,7 +147,6 @@ export const deleteUser = (userId) => {
     return apiService.delete(`/users/${userId}`);
 };
 
-// --- Review Functions ---
 export const addReview = (reviewData) => {
     return apiService.post('/reviews', reviewData);
 };
@@ -144,7 +155,6 @@ export const getApprovedReviews = () => {
     return apiService.get('/reviews/approved');
 };
 
-// --- Admin Review Functions ---
 export const getPendingReviews = () => {
     return apiService.get('/reviews/pending');
 };
@@ -157,7 +167,6 @@ export const deleteReview = (reviewId) => {
     return apiService.delete(`/reviews/${reviewId}`);
 };
 
-// --- Hero Section API Functions ---
 export const getHero = () => {
     return apiService.get('/hero');
 };
@@ -168,12 +177,10 @@ export const updateHero = (formData) => {
     });
 };
 
-// --- Comment Functions ---
 export const addComment = (productId, commentData) => {
     return apiService.post(`/comments/product/${productId}`, commentData);
 };
 
-// --- NEW FORGOT PASSWORD FUNCTIONS ---
 export const forgotPassword = (email) => {
     return apiService.post('/auth/forgot-password', { email });
 };
@@ -182,7 +189,6 @@ export const resetPassword = (token, newPassword) => {
     return apiService.post('/auth/reset-password', { token, newPassword });
 };
 
-// --- Corrected Description Image Upload Function ---
 export const uploadDescriptionImage = (formData) => {
     return apiService.post('/products/description-image', formData, {
         headers: {
@@ -223,18 +229,13 @@ export const createOrder = (orderData) => {
     params.append('city', orderData.city);
     params.append('address', orderData.address);
     params.append('phoneNumber', orderData.phoneNumber);
-    // Add couponCode to params if it exists
     if (orderData.couponCode) {
         params.append('couponCode', orderData.couponCode);
     }
     return apiService.post(`/orders?${params.toString()}`);
 };
 
-// --- NEW GUEST ORDER FUNCTION ---
-// MODIFICATION: Remove URLSearchParams and send the object directly
 export const createGuestOrder = (orderData) => {
-    // The 'orderData' object should contain all customer details AND the 'cartItems' array.
-    // Axios will automatically serialize this to JSON.
     return apiService.post('/orders/guest', orderData);
 };
 
@@ -260,8 +261,6 @@ export const exportOrders = () => {
     });
 };
 
-// --- NEW COUPON FUNCTIONS START ---
-
 export const createCoupon = (couponData) => {
     return apiService.post('/coupons', couponData);
 };
@@ -282,17 +281,13 @@ export const getCouponUsageStatistics = () => {
     return apiService.get('/coupons/usage-statistics');
 };
 
-// --- THIS IS THE NEW FUNCTION ---
 export const getCouponUsageStatisticsById = (couponId) => {
     return apiService.get(`/coupons/${couponId}/usage-statistics`);
 };
-// --- NEW COUPON FUNCTIONS END ---
 
 export const getProductSuggestions = (query) => {
     return apiService.get('/products/suggestions', { params: { query } });
 };
-
-// ... existing functions
 
 export const getAnnouncement = () => {
     return apiService.get('/announcement');
@@ -309,5 +304,3 @@ export const getCountdown = () => {
 export const saveCountdown = (countdownData) => {
     return apiService.post('/countdown', countdownData);
 };
-
-export default apiService;
