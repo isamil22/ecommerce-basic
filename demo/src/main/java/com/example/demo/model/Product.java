@@ -35,6 +35,7 @@ public class Product {
     private boolean newArrival;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 10) // <-- This is the new line you requested
     private ProductType type;
 
     @JsonManagedReference
@@ -45,7 +46,6 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    // --- MODIFICATION START ---
     @JsonManagedReference
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VariantType> variantTypes = new ArrayList<>();
@@ -53,7 +53,6 @@ public class Product {
     @JsonManagedReference
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> variants = new ArrayList<>();
-    // --- MODIFICATION END ---
 
     public enum ProductType {
         MEN, WOMEN, BOTH
