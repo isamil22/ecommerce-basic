@@ -1,308 +1,310 @@
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getProductById, createProduct, updateProduct, getAllCategories, uploadDescriptionImage } from '../../api/apiService';
+import { Editor } from '@tinymce/tinymce-react';
 
-const apiService = axios.create({
-    baseURL: '/api',
-});
-
-apiService.interceptors.request.use(config => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-}, error => {
-    return Promise.reject(error);
-});
-
-const handleMultipartFormData = (method, url, data) => {
-    return apiService({
-        method: method,
-        url: url,
-        data: data,
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
+const AdminProductForm = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [product, setProduct] = useState({
+        name: '',
+        description: '',
+        price: '',
+        quantity: '',
+        brand: '',
+        categoryId: '',
+        type: 'BOTH',
+        bestseller: false,
+        newArrival: false,
+        hasVariants: false,
+        variantTypes: [],
+        variants: []
     });
+    const [images, setImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const editorRef = useRef(null);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await getAllCategories();
+                setCategories(response.data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                setError('Failed to load categories.');
+            }
+        };
+
+        const fetchProduct = async () => {
+            if (id) {
+                try {
+                    const response = await getProductById(id);
+                    const productData = response.data;
+                    // Prepare product data for the form state
+                    setProduct({
+                        ...productData,
+                        variantTypes: productData.variantTypes ? productData.variantTypes.map(vt => ({...vt, options: vt.options.join(', ')})) : [],
+                        variants: productData.variants || []
+                    });
+                    setImagePreviews(productData.images || []);
+                } catch (error) {
+                    console.error('Error fetching product:', error);
+                    setError('Failed to load product data.');
+                }
+            }
+        };
+
+        fetchCategories();
+        fetchProduct();
+    }, [id]);
+
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setProduct(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        setImages(files);
+        const previews = files.map(file => URL.createObjectURL(file));
+        setImagePreviews(previews);
+    };
+
+    const handleVariantTypeChange = (index, field, value) => {
+        const updatedVariantTypes = [...product.variantTypes];
+        updatedVariantTypes[index][field] = value;
+        setProduct({ ...product, variantTypes: updatedVariantTypes });
+    };
+
+    const addVariantType = () => {
+        setProduct({
+            ...product,
+            variantTypes: [...product.variantTypes, { name: '', options: '' }]
+        });
+    };
+
+    const removeVariantType = (index) => {
+        const updatedVariantTypes = product.variantTypes.filter((_, i) => i !== index);
+        setProduct({ ...product, variantTypes: updatedVariantTypes });
+    };
+
+    const addVariant = () => {
+        const newVariant = { variantMap: {}, price: '', stock: '' };
+        product.variantTypes.forEach(vt => {
+            newVariant.variantMap[vt.name] = vt.options.split(',')[0]?.trim() || '';
+        });
+        setProduct({ ...product, variants: [...product.variants, newVariant] });
+    };
+
+    const handleVariantChange = (index, field, value) => {
+        const updatedVariants = [...product.variants];
+        updatedVariants[index][field] = value;
+        setProduct({ ...product, variants: updatedVariants });
+    };
+
+    const handleVariantMapChange = (index, name, value) => {
+        const updatedVariants = [...product.variants];
+        updatedVariants[index].variantMap[name] = value;
+        setProduct({ ...product, variants: updatedVariants });
+    };
+
+    const removeVariant = (index) => {
+        const updatedVariants = product.variants.filter((_, i) => i !== index);
+        setProduct({ ...product, variants: updatedVariants });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (editorRef.current) {
+            product.description = editorRef.current.getContent();
+        }
+
+        const formData = new FormData();
+
+        const productDataToSend = {
+            ...product,
+            variantTypes: product.hasVariants ? product.variantTypes.map(vt => ({
+                ...vt,
+                options: vt.options.split(',').map(o => o.trim())
+            })) : [],
+            variants: product.hasVariants ? product.variants : []
+        };
+
+        formData.append('product', new Blob([JSON.stringify(productDataToSend)], { type: 'application/json' }));
+
+        images.forEach(imageFile => {
+            formData.append('images', imageFile);
+        });
+
+        try {
+            if (id) {
+                await updateProduct(id, formData);
+                setSuccess('Product updated successfully!');
+            } else {
+                await createProduct(formData);
+                setSuccess('Product created successfully!');
+            }
+            setTimeout(() => navigate('/admin/products'), 2000);
+        } catch (error) {
+            setError('Failed to save product. Please check all fields.');
+            console.error('Error saving product:', error);
+        }
+    };
+
+    return (
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{id ? 'Edit Product' : 'Add Product'}</h1>
+            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
+            {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">{success}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" name="name" id="name" value={product.name} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                    </div>
+                    <div>
+                        <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
+                        <input type="number" name="price" id="price" value={product.price} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                        <input type="number" name="quantity" id="quantity" value={product.quantity} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                    </div>
+                    <div>
+                        <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand</label>
+                        <input type="text" name="brand" id="brand" value={product.brand} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="categoryId" id="categoryId" value={product.categoryId} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
+                            <option value="">Select a category</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
+                        <select name="type" id="type" value={product.type} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
+                            <option value="MEN">Men</option>
+                            <option value="WOMEN">Women</option>
+                            <option value="BOTH">Both</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                    <Editor
+                        apiKey='jeqjwyja4t9lzd3h889y31tf98ag6a1kp16xfns173v9cgr0' // IMPORTANT: Replace with your actual TinyMCE API key
+                        onInit={(evt, editor) => editorRef.current = editor}
+                        initialValue={product.description}
+                        init={{
+                            height: 500,
+                            menubar: false,
+                            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
+                            toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                            images_upload_handler: async (blobInfo) => {
+                                const formData = new FormData();
+                                formData.append('image', blobInfo.blob(), blobInfo.filename());
+                                const response = await uploadDescriptionImage(formData);
+                                return response.data.url;
+                            }
+                        }}
+                    />
+                </div>
+
+                <div className="flex items-center space-x-6">
+                    <div className="flex items-center">
+                        <input type="checkbox" name="bestseller" id="bestseller" checked={product.bestseller} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
+                        <label htmlFor="bestseller" className="ml-2 block text-sm text-gray-900">Bestseller</label>
+                    </div>
+                    <div className="flex items-center">
+                        <input type="checkbox" name="newArrival" id="newArrival" checked={product.newArrival} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
+                        <label htmlFor="newArrival" className="ml-2 block text-sm text-gray-900">New Arrival</label>
+                    </div>
+                    <div className="flex items-center">
+                        <input type="checkbox" name="hasVariants" id="hasVariants" checked={product.hasVariants} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
+                        <label htmlFor="hasVariants" className="ml-2 block text-sm text-gray-900">Has Variants</label>
+                    </div>
+                </div>
+
+                {product.hasVariants && (
+                    <div className="p-4 border rounded-md space-y-4">
+                        <h3 className="text-lg font-semibold">Variant Types</h3>
+                        {product.variantTypes.map((vt, index) => (
+                            <div key={index} className="flex items-end gap-4">
+                                <div className="flex-grow">
+                                    <label className="block text-sm font-medium">Type Name</label>
+                                    <input type="text" placeholder="e.g., Size" value={vt.name} onChange={(e) => handleVariantTypeChange(index, 'name', e.target.value)} className="mt-1 w-full rounded-md border-gray-300 shadow-sm" />
+                                </div>
+                                <div className="flex-grow">
+                                    <label className="block text-sm font-medium">Options (comma-separated)</label>
+                                    <input type="text" placeholder="e.g., S, M, L" value={vt.options} onChange={(e) => handleVariantTypeChange(index, 'options', e.target.value)} className="mt-1 w-full rounded-md border-gray-300 shadow-sm" />
+                                </div>
+                                <button type="button" onClick={() => removeVariantType(index)} className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600">-</button>
+                            </div>
+                        ))}
+                        <button type="button" onClick={addVariantType} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Add Variant Type</button>
+                    </div>
+                )}
+
+                {product.hasVariants && product.variantTypes.length > 0 && (
+                    <div className="p-4 border rounded-md space-y-4">
+                        <h3 className="text-lg font-semibold">Product Variants</h3>
+                        {product.variants.map((variant, index) => (
+                            <div key={index} className="flex items-end gap-4">
+                                {product.variantTypes.map(vt => (
+                                    <div key={vt.name} className="flex-grow">
+                                        <label className="block text-sm font-medium">{vt.name}</label>
+                                        <select value={variant.variantMap[vt.name] || ''} onChange={(e) => handleVariantMapChange(index, vt.name, e.target.value)} className="mt-1 w-full rounded-md border-gray-300 shadow-sm">
+                                            {(vt.options.split(',') || []).map(opt => <option key={opt.trim()} value={opt.trim()}>{opt.trim()}</option>)}
+                                        </select>
+                                    </div>
+                                ))}
+                                <div className="flex-grow">
+                                    <label className="block text-sm font-medium">Price</label>
+                                    <input type="number" value={variant.price} onChange={(e) => handleVariantChange(index, 'price', e.target.value)} className="mt-1 w-full rounded-md border-gray-300 shadow-sm" />
+                                </div>
+                                <div className="flex-grow">
+                                    <label className="block text-sm font-medium">Stock</label>
+                                    <input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', e.target.value)} className="mt-1 w-full rounded-md border-gray-300 shadow-sm" />
+                                </div>
+                                <button type="button" onClick={() => removeVariant(index)} className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600">-</button>
+                            </div>
+                        ))}
+                        <button type="button" onClick={addVariant} className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">Add Variant</button>
+                    </div>
+                )}
+
+                <div>
+                    <label htmlFor="images" className="block text-sm font-medium text-gray-700">Product Images</label>
+                    <input type="file" name="images" id="images" onChange={handleImageChange} multiple className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
+                </div>
+
+                <div className="flex flex-wrap gap-4">
+                    {imagePreviews.map((preview, index) => (
+                        <img key={index} src={preview} alt="Product preview" className="w-24 h-24 object-cover rounded-md" />
+                    ))}
+                </div>
+
+                <button type="submit" className="w-full bg-pink-600 text-white py-3 px-4 rounded-md hover:bg-pink-700 font-bold">{id ? 'Update Product' : 'Add Product'}</button>
+            </form>
+        </div>
+    );
 };
 
-export const getAllProducts = (params) => {
-    return apiService.get('/products', { params });
-};
-
-export const getProductById = (id) => {
-    return apiService.get(`/products/${id}`);
-};
-
-export const getHelloMessage = () => {
-    return apiService.get('/hello');
-};
-
-export const registerUser = (userData) => {
-    return apiService.post('/auth/register', userData);
-};
-
-export const loginUser = (credentials) => {
-    return apiService.post('/auth/login', credentials);
-};
-
-export const confirmEmail = (confirmationData) => {
-    return apiService.post('/auth/confirm-email', confirmationData);
-};
-
-export const logoutUser = () => {
-    localStorage.removeItem('token');
-};
-
-export const getUserProfile = () => {
-    return apiService.get('/auth/user/profile');
-};
-
-export const getCart = () => {
-    return apiService.get('/cart');
-};
-
-export const removeCartItem = (productId) => {
-    return apiService.delete(`/cart/${productId}`);
-};
-
-export const addToCart = (productId, quantity, productVariantId) => {
-    return apiService.post(`/cart/add`, { productId, quantity, productVariantId });
-};
-
-export const getUserOrders = () => {
-    return apiService.get('/orders/user');
-};
-
-export const getBestsellers = () => {
-    return apiService.get('/products/bestsellers');
-};
-
-export const getNewArrivals = () => {
-    return apiService.get('/products/new-arrivals');
-};
-
-export const createProduct = (productData) => {
-    if (productData instanceof FormData) {
-        return handleMultipartFormData('post', '/products', productData);
-    }
-    return apiService.post('/products', productData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-};
-
-export const updateProduct = (id, productData) => {
-    if (productData instanceof FormData) {
-        return handleMultipartFormData('put', `/products/${id}`, productData);
-    }
-    return apiService.put(`/products/${id}`, productData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-};
-
-export const deleteProduct = (id) => {
-    return apiService.delete(`/products/${id}`);
-};
-
-export const getAllCategories = () => {
-    return apiService.get('/categories');
-};
-
-export const createCategory = (formData) => {
-    return apiService.post('/categories', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
-};
-
-export const updateCategory = (id, formData) => {
-    return apiService.put(`/categories/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
-};
-
-export const deleteCategory = (id) => {
-    return apiService.delete(`/categories/${id}`);
-};
-
-export const getAllOrders = () => {
-    return apiService.get('/orders');
-};
-
-export const updateOrderStatus = (orderId, status) => {
-    return apiService.put(`/orders/${orderId}/status?status=${status}`);
-};
-
-export const getAllUsers = () => {
-    return apiService.get('/users');
-};
-
-export const updateUserRole = (userId, role) => {
-    return apiService.put(`/users/${userId}/role?role=${role}`);
-};
-
-export const deleteUser = (userId) => {
-    return apiService.delete(`/users/${userId}`);
-};
-
-export const addReview = (reviewData) => {
-    return apiService.post('/reviews', reviewData);
-};
-
-export const getApprovedReviews = () => {
-    return apiService.get('/reviews/approved');
-};
-
-export const getPendingReviews = () => {
-    return apiService.get('/reviews/pending');
-};
-
-export const approveReview = (reviewId) => {
-    return apiService.put(`/reviews/${reviewId}/approve`);
-};
-
-export const deleteReview = (reviewId) => {
-    return apiService.delete(`/reviews/${reviewId}`);
-};
-
-export const getHero = () => {
-    return apiService.get('/hero');
-};
-
-export const updateHero = (formData) => {
-    return apiService.put('/hero', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
-};
-
-export const addComment = (productId, commentData) => {
-    return apiService.post(`/comments/product/${productId}`, commentData);
-};
-
-export const forgotPassword = (email) => {
-    return apiService.post('/auth/forgot-password', { email });
-};
-
-export const resetPassword = (token, newPassword) => {
-    return apiService.post('/auth/reset-password', { token, newPassword });
-};
-
-export const uploadDescriptionImage = (formData) => {
-    return apiService.post('/products/description-image', formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-};
-
-export const createPack = (formData) => apiService.post('/packs', formData);
-
-export const updatePack = (id, formData) => {
-    return apiService.put(`/packs/${id}`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-};
-
-export const getAllPacks = () => {
-    return apiService.get('/packs');
-};
-
-export const getPackById = (id) => {
-    return apiService.get(`/packs/${id}`);
-};
-
-export const updateDefaultProductForPack = (packId, itemId, productId) => {
-    return apiService.put(`/packs/${packId}/items/${itemId}/default-product`, { productId });
-};
-
-export const deletePack = (id) => {
-    return apiService.delete(`/packs/${id}`);
-};
-
-export const createOrder = (orderData) => {
-    const params = new URLSearchParams();
-    params.append('clientFullName', orderData.clientFullName);
-    params.append('city', orderData.city);
-    params.append('address', orderData.address);
-    params.append('phoneNumber', orderData.phoneNumber);
-    if (orderData.couponCode) {
-        params.append('couponCode', orderData.couponCode);
-    }
-    return apiService.post(`/orders?${params.toString()}`);
-};
-
-export const createGuestOrder = (orderData) => {
-    return apiService.post('/orders/guest', orderData);
-};
-
-export const deleteOrder = (orderId) => {
-    return apiService.delete(`/orders/${orderId}`);
-};
-
-export const deleteAllOrders = () => {
-    return apiService.delete('/orders/all');
-};
-
-export const getDeletedOrders = () => {
-    return apiService.get('/orders/deleted');
-};
-
-export const restoreOrder = (orderId) => {
-    return apiService.post(`/orders/${orderId}/restore`);
-};
-
-export const exportOrders = () => {
-    return apiService.get('/orders/export', {
-        responseType: 'blob',
-    });
-};
-
-export const createCoupon = (couponData) => {
-    return apiService.post('/coupons', couponData);
-};
-
-export const validateCoupon = (code) => {
-    return apiService.get(`/coupons/validate/${code}`);
-};
-
-export const getAllCoupons = () => {
-    return apiService.get('/coupons');
-};
-
-export const deleteCoupon = (id) => {
-    return apiService.delete(`/coupons/${id}`);
-};
-
-export const getCouponUsageStatistics = () => {
-    return apiService.get('/coupons/usage-statistics');
-};
-
-export const getCouponUsageStatisticsById = (couponId) => {
-    return apiService.get(`/coupons/${couponId}/usage-statistics`);
-};
-
-export const getProductSuggestions = (query) => {
-    return apiService.get('/products/suggestions', { params: { query } });
-};
-
-export const getAnnouncement = () => {
-    return apiService.get('/announcement');
-};
-
-export const updateAnnouncement = (announcementData) => {
-    return apiService.put('/announcement', announcementData);
-};
-
-export const getCountdown = () => {
-    return apiService.get('/countdown');
-};
-
-export const saveCountdown = (countdownData) => {
-    return apiService.post('/countdown', countdownData);
-};
-
-export default apiService;
+export default AdminProductForm;
