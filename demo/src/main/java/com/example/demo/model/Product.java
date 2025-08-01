@@ -34,8 +34,11 @@ public class Product {
     private boolean bestseller;
     private boolean newArrival;
 
+    // This field is new or was missing from your entity
+    private boolean hasVariants = false;
+
     @Enumerated(EnumType.STRING)
-    @Column(length = 10) // <-- This is the new line you requested
+    @Column(length = 10)
     private ProductType type;
 
     @JsonManagedReference
