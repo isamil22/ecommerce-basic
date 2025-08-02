@@ -1,11 +1,8 @@
 package com.example.demo.dto;
 
 import com.example.demo.model.Product;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,46 +11,32 @@ import java.util.List;
 public class ProductDTO {
 
     private Long id;
-
-    @NotBlank(message = "Product name is required")
     private String name;
-
-    @NotBlank(message = "Product description is required")
     private String description;
-
-    @NotNull(message = "Price is required")
-    @Positive(message = "Price must be positive")
     private BigDecimal price;
-
-    @NotNull(message = "Quantity is required")
-    @PositiveOrZero(message = "Quantity cannot be negative")
     private Integer quantity;
-
-    private List<String> images;
-    private List<CommentDTO> comments;
+    private List<String> images; // For response
+    private List<MultipartFile> imageFiles; // For request
     private String brand;
     private boolean bestseller;
     private boolean newArrival;
-
-    // Add the hasVariants field
-    private Boolean hasVariants = false;
-
-    @NotNull(message = "Category ID is required for a product")
     private Long categoryId;
-
     private String categoryName;
     private Product.ProductType type;
-
-    // These fields will now correctly reference the public DTO classes
+    private boolean hasVariants;
     private List<VariantTypeDto> variantTypes;
     private List<ProductVariantDto> variants;
+    private List<CommentDTO> comments;
 
-    // Getter and setter for hasVariants (explicitly defined for clarity)
-    public Boolean getHasVariants() {
-        return hasVariants;
-    }
+    // --- NEWLY ADDED/UPDATED FIELDS ---
+    /**
+     * Flag indicating if this product can be used as a base for a custom pack.
+     */
+    private boolean isPackable;
 
-    public void setHasVariants(Boolean hasVariants) {
-        this.hasVariants = hasVariants;
-    }
+    /**
+     * The rules for the custom pack. This will only be populated if isPackable is true.
+     */
+    private CustomPackRuleDto customPackRule;
+    // ------------------------------------
 }
