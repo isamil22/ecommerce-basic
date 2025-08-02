@@ -25,8 +25,8 @@ const AdminProductForm = () => {
     const [categories, setCategories] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [variantImages, setVariantImages] = useState({}); // Store variant images by index
-    const [variantImagePreviews, setVariantImagePreviews] = useState({}); // Store variant image previews
+    const [variantImages, setVariantImages] = useState({});
+    const [variantImagePreviews, setVariantImagePreviews] = useState({});
     const editorRef = useRef(null);
 
     useEffect(() => {
@@ -55,8 +55,6 @@ const AdminProductForm = () => {
                         variants: productData.variants || []
                     });
                     setImagePreviews(productData.images || []);
-
-                    // Set variant image previews for existing variants
                     if (productData.variants) {
                         const previews = {};
                         productData.variants.forEach((variant, index) => {
@@ -77,6 +75,44 @@ const AdminProductForm = () => {
         fetchProduct();
     }, [id]);
 
+    useEffect(() => {
+        if (product.hasVariants && product.variantTypes.length > 0 && product.variantTypes.every(vt => vt.name && vt.options)) {
+            const generateCombinations = (types) => {
+                if (types.length === 0) {
+                    return [{}];
+                }
+                const firstType = types[0];
+                const restOfTypes = types.slice(1);
+                const options = firstType.options.split(',').map(o => o.trim()).filter(Boolean);
+                const combinations = generateCombinations(restOfTypes);
+                const newCombinations = [];
+                options.forEach(option => {
+                    combinations.forEach(combination => {
+                        newCombinations.push({ ...combination, [firstType.name]: option });
+                    });
+                });
+                return newCombinations;
+            };
+
+            const combinations = generateCombinations(product.variantTypes);
+            const newVariants = combinations.map(variantMap => {
+                const existingVariant = product.variants.find(v =>
+                    JSON.stringify(v.variantMap) === JSON.stringify(variantMap)
+                );
+                return {
+                    variantMap,
+                    price: existingVariant?.price || product.price,
+                    stock: existingVariant?.stock || 0,
+                    imageUrl: existingVariant?.imageUrl || ''
+                };
+            });
+            setProduct(prev => ({ ...prev, variants: newVariants }));
+        } else if (product.hasVariants && product.variantTypes.length > 0) {
+            setProduct(prev => ({ ...prev, variants: [] }));
+        }
+    }, [product.variantTypes]);
+
+
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         setProduct(prev => {
@@ -85,7 +121,6 @@ const AdminProductForm = () => {
                 [name]: type === 'checkbox' ? checked : value
             };
 
-            // If hasVariants is unchecked, clear variant data
             if (name === 'hasVariants' && !checked) {
                 newProduct.variantTypes = [];
                 newProduct.variants = [];
@@ -133,17 +168,16 @@ const AdminProductForm = () => {
             return updated;
         });
 
-        // Also clear the imageUrl from the variant
         const updatedVariants = [...product.variants];
         updatedVariants[variantIndex].imageUrl = '';
         setProduct({ ...product, variants: updatedVariants });
     };
 
     const handleVariantTypeChange = (index, field, value) => {
-        const updatedTypes = variantTypes.map((item, i) =>
+        const updatedTypes = product.variantTypes.map((item, i) =>
             i === index ? { ...item, [field]: value } : item
         );
-        setVariantTypes(updatedTypes);
+        setProduct(prev => ({ ...prev, variantTypes: updatedTypes }));
     };
 
     const addVariantType = () => {
@@ -160,7 +194,6 @@ const AdminProductForm = () => {
 
     const addVariant = () => {
         const newVariant = { variantMap: {}, price: '', stock: '', imageUrl: '' };
-        // Initialize variant map with first option of each variant type
         product.variantTypes.forEach(vt => {
             if (vt.options && vt.options.trim()) {
                 const firstOption = vt.options.split(',')[0]?.trim() || '';
@@ -186,7 +219,6 @@ const AdminProductForm = () => {
         const updatedVariants = product.variants.filter((_, i) => i !== index);
         setProduct({ ...product, variants: updatedVariants });
 
-        // Also remove variant images for this index
         setVariantImages(prev => {
             const updated = { ...prev };
             delete updated[index];
@@ -201,7 +233,6 @@ const AdminProductForm = () => {
     };
 
     const validateForm = () => {
-        // Basic validation
         if (!product.name.trim()) {
             setError('Product name is required');
             return false;
@@ -219,7 +250,6 @@ const AdminProductForm = () => {
             return false;
         }
 
-        // Variant validation
         if (product.hasVariants) {
             if (product.variantTypes.length === 0) {
                 setError('At least one variant type is required when variants are enabled');
@@ -267,7 +297,6 @@ const AdminProductForm = () => {
         }
 
         try {
-            // Get description from editor
             let description = product.description;
             if (editorRef.current) {
                 description = editorRef.current.getContent();
@@ -275,7 +304,6 @@ const AdminProductForm = () => {
 
             const formData = new FormData();
 
-            // Upload variant images first and get their URLs
             const variantImageUrls = {};
             for (const [index, file] of Object.entries(variantImages)) {
                 if (file) {
@@ -290,7 +318,6 @@ const AdminProductForm = () => {
                 }
             }
 
-            // Prepare product data with uploaded variant image URLs
             const productDataToSend = {
                 ...product,
                 description,
@@ -308,11 +335,8 @@ const AdminProductForm = () => {
             };
 
             console.log('Sending product data:', productDataToSend);
-
-            // Append product data as JSON string
             formData.append('product', JSON.stringify(productDataToSend));
 
-            // Append main product image files
             if (images && images.length > 0) {
                 images.forEach(imageFile => {
                     formData.append('images', imageFile);
@@ -336,8 +360,6 @@ const AdminProductForm = () => {
 
         } catch (error) {
             console.error('Error saving product:', error);
-
-            // Extract error message from response
             let errorMessage = 'Failed to save product. Please check all fields.';
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
@@ -348,7 +370,6 @@ const AdminProductForm = () => {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-
             setError(errorMessage);
         }
     };
@@ -564,7 +585,7 @@ const AdminProductForm = () => {
                     </div>
                 )}
 
-                {product.hasVariants && product.variantTypes.length > 0 && (
+                {product.hasVariants && product.variants.length > 0 && (
                     <div className="p-4 border rounded-md space-y-4 bg-gray-50">
                         <h3 className="text-lg font-semibold">Product Variants</h3>
                         {product.variants.map((variant, index) => (
