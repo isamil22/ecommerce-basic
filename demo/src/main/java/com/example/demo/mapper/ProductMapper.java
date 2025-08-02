@@ -1,91 +1,49 @@
 package com.example.demo.mapper;
 
-import com.example.demo.dto.CommentDTO;
 import com.example.demo.dto.ProductDTO;
-import com.example.demo.dto.ProductVariantDto;
-import com.example.demo.dto.VariantTypeDto;
-import com.example.demo.model.*;
+import com.example.demo.model.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
+/**
+ * Mapper for converting between Product entity and ProductDTO.
+ * It now uses mappers for comments, variants, and the new custom pack rules.
+ */
+@Mapper(componentModel = "spring", uses = {CommentMapper.class, VariantMapper.class, CustomPackRuleMapper.class})
 public interface ProductMapper {
 
-    @Mapping(source = "category.name", target = "categoryName")
+    /**
+     * Converts a Product entity to a ProductDTO.
+     * It maps the category ID and name from the nested Category object.
+     * @param product The Product entity.
+     * @return The corresponding ProductDTO.
+     */
     @Mapping(source = "category.id", target = "categoryId")
-    @Mapping(source = "variantTypes", target = "variantTypes")
-    @Mapping(source = "variants", target = "variants")
-    @Mapping(source = "hasVariants", target = "hasVariants")
-    ProductDTO toDTO(Product product);
+    @Mapping(source = "category.name", target = "categoryName")
+    ProductDTO toDto(Product product);
 
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "variantTypes", ignore = true)
-    @Mapping(target = "variants", ignore = true)
-    @Mapping(target = "comments", ignore = true)
-    @Mapping(target = "id", ignore = true)
+    /**
+     * Converts a ProductDTO to a Product entity.
+     * It maps the categoryId from the DTO to the nested Category object's ID.
+     * @param productDTO The ProductDTO.
+     * @return The corresponding Product entity.
+     */
+    @Mapping(source = "categoryId", target = "category.id")
     Product toEntity(ProductDTO productDTO);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "comments", ignore = true)
-    @Mapping(target = "images", ignore = true)
-    @Mapping(target = "variantTypes", ignore = true)
-    @Mapping(target = "variants", ignore = true)
-    void updateProductFromDto(ProductDTO dto, @MappingTarget Product entity);
+    /**
+     * Converts a list of Product entities to a list of ProductDTOs.
+     * @param products The list of Product entities.
+     * @return The list of corresponding ProductDTOs.
+     */
+    List<ProductDTO> toDtoList(List<Product> products);
 
-    // ✅ Existing VariantType mapping (working correctly)
-    default List<VariantTypeDto> mapVariantTypes(List<VariantType> variantTypes) {
-        if (variantTypes == null) {
-            return null;
-        }
-        return variantTypes.stream()
-                .map(this::variantTypeToVariantTypeDto)
-                .collect(Collectors.toList());
-    }
-
-    default VariantTypeDto variantTypeToVariantTypeDto(VariantType variantType) {
-        if (variantType == null) {
-            return null;
-        }
-        VariantTypeDto variantTypeDto = new VariantTypeDto();
-        variantTypeDto.setName(variantType.getName());
-        variantTypeDto.setOptions(variantType.getOptions().stream()
-                .map(VariantOption::getValue)
-                .collect(Collectors.toList()));
-        return variantTypeDto;
-    }
-
-    // 🔧 ProductVariant mapping methods
-    default List<ProductVariantDto> mapProductVariants(List<ProductVariant> productVariants) {
-        if (productVariants == null) {
-            return null;
-        }
-        return productVariants.stream()
-                .map(this::productVariantToProductVariantDto)
-                .collect(Collectors.toList());
-    }
-
-    default ProductVariantDto productVariantToProductVariantDto(ProductVariant productVariant) {
-        if (productVariant == null) {
-            return null;
-        }
-        ProductVariantDto dto = new ProductVariantDto();
-        dto.setVariantMap(productVariant.getVariantMap());
-        dto.setPrice(productVariant.getPrice());
-        dto.setStock(productVariant.getStock());
-        dto.setImageUrl(productVariant.getImageUrl());
-        return dto;
-    }
-
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "userFullName", source = "user.fullName")
-    CommentDTO toDTO(Comment comment);
-
-    @Mapping(target = "user.id", source = "userId")
-    @Mapping(target = "product", ignore = true)
-    Comment toEntity(CommentDTO commentDTO);
+    /**
+     * Converts a list of ProductDTOs to a list of Product entities.
+     * @param productDTOs The list of ProductDTOs.
+     * @return The list of corresponding Product entities.
+     */
+    List<Product> toEntityList(List<ProductDTO> productDTOs);
 }
