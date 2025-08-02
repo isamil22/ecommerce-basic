@@ -6,7 +6,7 @@ import com.example.demo.dto.VariantTypeDto;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.mapper.CustomPackRuleMapper;
 import com.example.demo.mapper.ProductMapper;
-import com.example.demo.mapper.VariantMapper; // <-- IMPORT ADDED
+import com.example.demo.mapper.VariantMapper;
 import com.example.demo.model.*;
 import com.example.demo.repositories.CategoryRepository;
 import com.example.demo.repositories.ProductRepository;
@@ -40,7 +40,7 @@ public class ProductService {
     private ProductMapper productMapper;
 
     @Autowired
-    private VariantMapper variantMapper; // <-- DEPENDENCY INJECTED
+    private VariantMapper variantMapper;
 
     @Autowired
     private ProductSpecification productSpecification;
@@ -223,7 +223,6 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
-        // <-- CORRECTED LINE -->
         return product.getVariants().stream()
                 .map(variantMapper::toDto)
                 .collect(Collectors.toList());
