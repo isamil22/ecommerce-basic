@@ -140,9 +140,10 @@ const AdminProductForm = () => {
     };
 
     const handleVariantTypeChange = (index, field, value) => {
-        const updatedVariantTypes = [...product.variantTypes];
-        updatedVariantTypes[index][field] = value;
-        setProduct({ ...product, variantTypes: updatedVariantTypes });
+        const updatedTypes = variantTypes.map((item, i) =>
+            i === index ? { ...item, [field]: value } : item
+        );
+        setVariantTypes(updatedTypes);
     };
 
     const addVariantType = () => {
