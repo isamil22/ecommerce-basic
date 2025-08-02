@@ -33,9 +33,11 @@ public class Product {
     private String brand;
     private boolean bestseller;
     private boolean newArrival;
-
-    // This field is new or was missing from your entity
     private boolean hasVariants = false;
+
+    // --- NEW FIELD ---
+    // Flag to determine if this product can be a base for a custom pack
+    private boolean isPackable = false;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
@@ -56,6 +58,13 @@ public class Product {
     @JsonManagedReference
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> variants = new ArrayList<>();
+
+    // --- NEW RELATIONSHIP ---
+    // Links to the specific rules if this product is a pack
+    @JsonManagedReference
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private CustomPackRule customPackRule;
+
 
     public enum ProductType {
         MEN, WOMEN, BOTH
