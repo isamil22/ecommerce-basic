@@ -26,42 +26,44 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // Add an ObjectMapper instance to manually handle JSON deserialization
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Creates a new product with optional images. The product data is sent as a JSON string
-     * to avoid Content-Type issues with multipart requests from clients like Swagger.
-     */
     @PostMapping(consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> addProduct(
-            @RequestPart("product") String productJson, // Changed from ProductDTO to String
+            @RequestPart("product") String productJson,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-
-        // Manually deserialize the JSON string to a ProductDTO
         ProductDTO productDTO = objectMapper.readValue(productJson, ProductDTO.class);
-
         ProductDTO newProduct = productService.createProductWithImages(productDTO, images);
         return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
     }
 
-    /**
-     * Updates an existing product with optional new images. The product data is sent as a JSON string.
-     */
     @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable Long id,
-            @RequestPart("product") String productJson, // Changed from ProductDTO to String
+            @RequestPart("product") String productJson,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-
-        // Manually deserialize the JSON string to a ProductDTO
         ProductDTO productDTO = objectMapper.readValue(productJson, ProductDTO.class);
-
         ProductDTO updatedProduct = productService.updateProductWithImages(id, productDTO, images);
         return ResponseEntity.ok(updatedProduct);
     }
+
+    // *** NEW ENDPOINT ***
+    /**
+     * Finds all products that are marked as "packable".
+     * This endpoint is for public use, allowing users to see which bases they can select
+     * for building a custom pack.
+     *
+     * @return A list of products that can be used to build a custom pack.
+     */
+    @GetMapping("/packable")
+    public ResponseEntity<List<ProductDTO>> getPackableProducts() {
+        List<ProductDTO> packableProducts = productService.findPackableProducts();
+        return ResponseEntity.ok(packableProducts);
+    }
+
+    // ----- Other Existing Endpoints (No Changes Needed) -----
 
     @GetMapping("/suggestions")
     public ResponseEntity<List<String>> getProductSuggestions(@RequestParam String query) {
@@ -79,7 +81,6 @@ public class ProductController {
         }
     }
 
-
     @GetMapping("/bestsellers")
     public ResponseEntity<List<ProductDTO>> getBestsellers() {
         return ResponseEntity.ok(productService.getBestsellers());
@@ -90,10 +91,6 @@ public class ProductController {
         return ResponseEntity.ok(productService.getNewArrivals());
     }
 
-    /**
-     * UPDATED: This method now handles filtering, pagination, and sorting for products.
-     * It accepts various request parameters to filter the results dynamically.
-     */
     @GetMapping
     public ResponseEntity<Page<ProductDTO>> getAllProducts(
             @RequestParam(required = false) String search,
@@ -123,7 +120,6 @@ public class ProductController {
 
     @GetMapping("/{id}/variants")
     public ResponseEntity<List<ProductVariantDto>> getProductVariants(@PathVariable Long id) {
-        // You would need to add a 'getProductVariants' method to your service
         List<ProductVariantDto> variants = productService.getProductVariants(id);
         return ResponseEntity.ok(variants);
     }
