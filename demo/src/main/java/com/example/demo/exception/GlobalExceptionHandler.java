@@ -14,9 +14,7 @@ import java.util.Date;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // --- ADD THESE TWO LINES ---
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    // -------------------------
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<?> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request){
@@ -30,6 +28,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(PackValidationException.class)
+    public ResponseEntity<?> handlePackValidationException(PackValidationException ex, WebRequest request) {
+        ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<?> handleIllegalStateException(IllegalStateException ex, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false));
@@ -38,9 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGlobalException(Exception ex, WebRequest request){
-        // --- ADD THIS LOGGING LINE ---
         logger.error("An unexpected error occurred: ", ex);
-        // -------------------------
         ErrorDetails errorDetails = new ErrorDetails(new Date(), "An internal server error occurred.", request.getDescription(false));
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
