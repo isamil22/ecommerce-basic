@@ -1,4 +1,3 @@
-// demo/src/main/java/com/example/demo/dto/ProductDTO.java
 package com.example.demo.dto;
 
 import com.example.demo.model.Product;
@@ -36,6 +35,9 @@ public class ProductDTO {
     private boolean bestseller;
     private boolean newArrival;
 
+    // Add the hasVariants field
+    private Boolean hasVariants = false;
+
     @NotNull(message = "Category ID is required for a product")
     private Long categoryId;
 
@@ -45,4 +47,13 @@ public class ProductDTO {
     // These fields will now correctly reference the public DTO classes
     private List<VariantTypeDto> variantTypes;
     private List<ProductVariantDto> variants;
+
+    // Getter and setter for hasVariants (explicitly defined for clarity)
+    public Boolean getHasVariants() {
+        return hasVariants;
+    }
+
+    public void setHasVariants(Boolean hasVariants) {
+        this.hasVariants = hasVariants;
+    }
 }

@@ -1,4 +1,3 @@
-// demo/src/main/java/com/example/demo/mapper/ProductMapper.java
 package com.example.demo.mapper;
 
 import com.example.demo.dto.CommentDTO;
@@ -20,11 +19,14 @@ public interface ProductMapper {
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "variantTypes", target = "variantTypes")
     @Mapping(source = "variants", target = "variants")
+    @Mapping(source = "hasVariants", target = "hasVariants")
     ProductDTO toDTO(Product product);
 
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "variantTypes", ignore = true)
     @Mapping(target = "variants", ignore = true)
+    @Mapping(target = "comments", ignore = true)
+    @Mapping(target = "id", ignore = true)
     Product toEntity(ProductDTO productDTO);
 
     @Mapping(target = "id", ignore = true)
@@ -57,7 +59,7 @@ public interface ProductMapper {
         return variantTypeDto;
     }
 
-    // 🔧 MISSING: ProductVariant mapping methods
+    // 🔧 ProductVariant mapping methods
     default List<ProductVariantDto> mapProductVariants(List<ProductVariant> productVariants) {
         if (productVariants == null) {
             return null;

@@ -4,6 +4,7 @@ const apiService = axios.create({
     baseURL: '/api',
 });
 
+// Add JWT token to every request if it exists
 apiService.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -14,16 +15,33 @@ apiService.interceptors.request.use(config => {
     return Promise.reject(error);
 });
 
-const handleMultipartFormData = (method, url, data) => {
+// --- UPDATED `createProduct` and `updateProduct` functions ---
+
+export const createProduct = (formData) => {
     return apiService({
-        method: method,
-        url: url,
-        data: data,
+        method: 'post',
+        url: '/products',
+        data: formData,
         headers: {
-            'Content-Type': 'multipart/form-data',
+            // Don't set Content-Type - let the browser set it automatically for multipart/form-data
+            // This ensures proper boundary is set
         },
     });
 };
+
+export const updateProduct = (id, formData) => {
+    return apiService({
+        method: 'put',
+        url: `/products/${id}`,
+        data: formData,
+        headers: {
+            // Don't set Content-Type - let the browser set it automatically for multipart/form-data
+            // This ensures proper boundary is set
+        },
+    });
+};
+
+// --- Other existing functions ---
 
 export const getAllProducts = (params) => {
     return apiService.get('/products', { params });
@@ -79,28 +97,6 @@ export const getBestsellers = () => {
 
 export const getNewArrivals = () => {
     return apiService.get('/products/new-arrivals');
-};
-
-export const createProduct = (productData) => {
-    if (productData instanceof FormData) {
-        return handleMultipartFormData('post', '/products', productData);
-    }
-    return apiService.post('/products', productData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
-};
-
-export const updateProduct = (id, productData) => {
-    if (productData instanceof FormData) {
-        return handleMultipartFormData('put', `/products/${id}`, productData);
-    }
-    return apiService.put(`/products/${id}`, productData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
 };
 
 export const deleteProduct = (id) => {

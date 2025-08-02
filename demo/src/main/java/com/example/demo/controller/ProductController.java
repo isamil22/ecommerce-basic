@@ -3,7 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.ProductDTO;
 import com.example.demo.dto.ProductVariantDto;
 import com.example.demo.service.ProductService;
-import com.fasterxml.jackson.databind.ObjectMapper; // Import ObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
