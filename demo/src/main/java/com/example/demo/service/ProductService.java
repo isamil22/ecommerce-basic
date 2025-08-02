@@ -4,7 +4,9 @@ import com.example.demo.dto.ProductDTO;
 import com.example.demo.dto.ProductVariantDto;
 import com.example.demo.dto.VariantTypeDto;
 import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.mapper.CustomPackRuleMapper;
 import com.example.demo.mapper.ProductMapper;
+import com.example.demo.mapper.VariantMapper; // <-- IMPORT ADDED
 import com.example.demo.model.*;
 import com.example.demo.repositories.CategoryRepository;
 import com.example.demo.repositories.ProductRepository;
@@ -38,29 +40,31 @@ public class ProductService {
     private ProductMapper productMapper;
 
     @Autowired
+    private VariantMapper variantMapper; // <-- DEPENDENCY INJECTED
+
+    @Autowired
     private ProductSpecification productSpecification;
+
+    @Autowired
+    private CustomPackRuleMapper customPackRuleMapper;
 
     @Transactional
     public ProductDTO createProductWithImages(ProductDTO productDTO, List<MultipartFile> images) throws IOException {
-        // Validate product data
         validateProductData(productDTO);
-
-        if (productDTO.getHasVariants() != null && productDTO.getHasVariants()) {
+        if (productDTO.isHasVariants()) {
             validateProductVariants(productDTO);
         }
 
         Product product = productMapper.toEntity(productDTO);
 
-        // Set category
         Category category = categoryRepository.findById(productDTO.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + productDTO.getCategoryId()));
         product.setCategory(category);
 
-        // Set basic fields
         product.setType(productDTO.getType());
-        product.setHasVariants(productDTO.getHasVariants() != null ? productDTO.getHasVariants() : false);
+        product.setHasVariants(productDTO.isHasVariants());
+        product.setPackable(productDTO.isPackable());
 
-        // Handle images
         if (images != null && !images.isEmpty()) {
             List<String> imageUrls = uploadAndGetImageUrls(images);
             product.setImages(imageUrls);
@@ -68,91 +72,83 @@ public class ProductService {
             product.setImages(new ArrayList<>());
         }
 
-        // Handle variants
-        updateVariantsForProduct(product, productDTO);
+        updateProductSubEntities(product, productDTO);
 
         Product savedProduct = productRepository.save(product);
-        return productMapper.toDTO(savedProduct);
+        return productMapper.toDto(savedProduct);
     }
 
     @Transactional
     public ProductDTO updateProductWithImages(Long id, ProductDTO productDTO, List<MultipartFile> images) throws IOException {
-        // Validate product data
         validateProductData(productDTO);
-
-        if (productDTO.getHasVariants() != null && productDTO.getHasVariants()) {
+        if (productDTO.isHasVariants()) {
             validateProductVariants(productDTO);
         }
 
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
-        // Update basic fields
-        productMapper.updateProductFromDto(productDTO, existingProduct);
-        existingProduct.setHasVariants(productDTO.getHasVariants() != null ? productDTO.getHasVariants() : false);
+        updateProductFromDto(existingProduct, productDTO);
 
-        // Update category if changed
         if (!existingProduct.getCategory().getId().equals(productDTO.getCategoryId())) {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + productDTO.getCategoryId()));
             existingProduct.setCategory(category);
         }
 
-        // Handle images
         if (images != null && !images.isEmpty()) {
             List<String> imageUrls = uploadAndGetImageUrls(images);
             existingProduct.getImages().clear();
             existingProduct.getImages().addAll(imageUrls);
         }
 
-        // Handle variants
-        updateVariantsForProduct(existingProduct, productDTO);
+        updateProductSubEntities(existingProduct, productDTO);
 
         Product updatedProduct = productRepository.save(existingProduct);
-        return productMapper.toDTO(updatedProduct);
+        return productMapper.toDto(updatedProduct);
+    }
+
+    private void updateProductSubEntities(Product product, ProductDTO productDTO) {
+        updateVariantsForProduct(product, productDTO);
+        updateCustomPackRuleForProduct(product, productDTO);
+    }
+
+    private void updateCustomPackRuleForProduct(Product product, ProductDTO productDTO) {
+        if (product.getCustomPackRule() != null) {
+            product.getCustomPackRule().setProduct(null);
+        }
+        product.setCustomPackRule(null);
+
+        if (product.isPackable() && productDTO.getCustomPackRule() != null) {
+            CustomPackRule rule = customPackRuleMapper.toEntity(productDTO.getCustomPackRule());
+            rule.setProduct(product);
+            product.setCustomPackRule(rule);
+        }
     }
 
     private void updateVariantsForProduct(Product product, ProductDTO productDTO) {
-        // Clear existing variants
         product.getVariantTypes().clear();
         product.getVariants().clear();
 
-        // Only process variants if hasVariants is true
-        if (productDTO.getHasVariants() != null && productDTO.getHasVariants()) {
-            // Process variant types
-            if (productDTO.getVariantTypes() != null && !productDTO.getVariantTypes().isEmpty()) {
+        if (productDTO.isHasVariants()) {
+            if (productDTO.getVariantTypes() != null) {
                 productDTO.getVariantTypes().forEach(vtDto -> {
-                    if (vtDto.getName() == null || vtDto.getName().trim().isEmpty()) {
-                        throw new IllegalArgumentException("Variant type name cannot be empty");
-                    }
-
                     VariantType variantType = new VariantType();
-                    variantType.setName(vtDto.getName().trim());
+                    variantType.setName(vtDto.getName());
                     variantType.setProduct(product);
-
-                    List<VariantOption> options = new ArrayList<>();
-                    if (vtDto.getOptions() != null && !vtDto.getOptions().isEmpty()) {
-                        Set<String> uniqueOptions = new LinkedHashSet<>();
-                        vtDto.getOptions().forEach(optionValue -> {
-                            if (optionValue != null && !optionValue.trim().isEmpty()) {
-                                uniqueOptions.add(optionValue.trim());
-                            }
-                        });
-
-                        uniqueOptions.forEach(optionValue -> {
+                    if (vtDto.getOptions() != null) {
+                        List<VariantOption> options = vtDto.getOptions().stream().map(optStr -> {
                             VariantOption option = new VariantOption();
-                            option.setValue(optionValue);
+                            option.setValue(optStr);
                             option.setVariantType(variantType);
-                            options.add(option);
-                        });
+                            return option;
+                        }).collect(Collectors.toList());
+                        variantType.setOptions(options);
                     }
-                    variantType.setOptions(options);
                     product.getVariantTypes().add(variantType);
                 });
             }
-
-            // Process product variants
-            if (productDTO.getVariants() != null && !productDTO.getVariants().isEmpty()) {
+            if (productDTO.getVariants() != null) {
                 productDTO.getVariants().forEach(pvDto -> {
                     ProductVariant productVariant = new ProductVariant();
                     productVariant.setProduct(product);
@@ -166,12 +162,25 @@ public class ProductService {
         }
     }
 
+    private void updateProductFromDto(Product product, ProductDTO dto) {
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setQuantity(dto.getQuantity());
+        product.setBrand(dto.getBrand());
+        product.setBestseller(dto.isBestseller());
+        product.setNewArrival(dto.isNewArrival());
+        product.setType(dto.getType());
+        product.setHasVariants(dto.isHasVariants());
+        product.setPackable(dto.isPackable());
+    }
+
     private void validateProductData(ProductDTO productDTO) {
         if (productDTO.getName() == null || productDTO.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Product name is required");
         }
-        if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Product price must be positive");
+        if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Product price must be non-negative");
         }
         if (productDTO.getQuantity() == null || productDTO.getQuantity() < 0) {
             throw new IllegalArgumentException("Product quantity cannot be negative");
@@ -185,12 +194,9 @@ public class ProductService {
         if (productDTO.getVariantTypes() == null || productDTO.getVariantTypes().isEmpty()) {
             throw new IllegalArgumentException("At least one variant type is required when variants are enabled");
         }
-
         if (productDTO.getVariants() == null || productDTO.getVariants().isEmpty()) {
             throw new IllegalArgumentException("At least one variant is required when variants are enabled");
         }
-
-        // Validate variant types
         for (VariantTypeDto variantType : productDTO.getVariantTypes()) {
             if (variantType.getName() == null || variantType.getName().trim().isEmpty()) {
                 throw new IllegalArgumentException("Variant type name is required");
@@ -199,11 +205,9 @@ public class ProductService {
                 throw new IllegalArgumentException("Variant type '" + variantType.getName() + "' must have at least one option");
             }
         }
-
-        // Validate variants
         for (ProductVariantDto variant : productDTO.getVariants()) {
-            if (variant.getPrice() == null || variant.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("All variants must have a valid positive price");
+            if (variant.getPrice() == null || variant.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("All variants must have a valid non-negative price");
             }
             if (variant.getStock() < 0) {
                 throw new IllegalArgumentException("Variant stock cannot be negative");
@@ -219,8 +223,9 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
+        // <-- CORRECTED LINE -->
         return product.getVariants().stream()
-                .map(productMapper::productVariantToProductVariantDto)
+                .map(variantMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -244,7 +249,7 @@ public class ProductService {
     public Page<ProductDTO> getAllProducts(String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, String brand, Boolean bestseller, Boolean newArrival, String type, Pageable pageable) {
         Specification<Product> spec = productSpecification.getProducts(search, minPrice, maxPrice, brand, bestseller, newArrival, categoryId, type);
         return productRepository.findAll(spec, pageable)
-                .map(productMapper::toDTO);
+                .map(productMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -258,14 +263,14 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductDTO> getBestsellers() {
         return productRepository.findByBestsellerIsTrue(Pageable.unpaged()).getContent().stream()
-                .map(productMapper::toDTO)
+                .map(productMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ProductDTO> getNewArrivals() {
         return productRepository.findByNewArrivalIsTrue(Pageable.unpaged()).getContent().stream()
-                .map(productMapper::toDTO)
+                .map(productMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -273,7 +278,7 @@ public class ProductService {
     public ProductDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        return productMapper.toDTO(product);
+        return productMapper.toDto(product);
     }
 
     public void deleteProduct(Long id) {
@@ -281,5 +286,11 @@ public class ProductService {
             throw new ResourceNotFoundException("Product not found with id: " + id);
         }
         productRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductDTO> findPackableProducts() {
+        List<Product> products = productRepository.findByIsPackableTrue();
+        return productMapper.toDtoList(products);
     }
 }
