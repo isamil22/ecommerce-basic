@@ -43,7 +43,7 @@ const AdminProductForm = () => {
                 try {
                     const response = await getProductById(id);
                     const productData = response.data;
-                    // Prepare product data for the form state
+                    // **THE FIX: Ensure variants and variantTypes are always arrays**
                     setProduct({
                         ...productData,
                         variantTypes: productData.variantTypes ? productData.variantTypes.map(vt => ({...vt, options: vt.options.join(', ')})) : [],
