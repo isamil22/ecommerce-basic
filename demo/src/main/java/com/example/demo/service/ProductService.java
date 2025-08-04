@@ -282,4 +282,11 @@ public class ProductService {
         }
         productRepository.deleteById(id);
     }
+
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getPackableProducts() {
+        return productRepository.findByIsPackableTrue().stream()
+                .map(productMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

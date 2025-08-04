@@ -37,6 +37,8 @@ public class Product {
     // This field is new or was missing from your entity
     private boolean hasVariants = false;
 
+    private boolean isPackable = false; // Add this line
+
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private ProductType type;

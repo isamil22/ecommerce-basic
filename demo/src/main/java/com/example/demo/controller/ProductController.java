@@ -127,4 +127,9 @@ public class ProductController {
         List<ProductVariantDto> variants = productService.getProductVariants(id);
         return ResponseEntity.ok(variants);
     }
+
+    @GetMapping("/packable")
+    public ResponseEntity<List<ProductDTO>> getPackableProducts() {
+        return ResponseEntity.ok(productService.getPackableProducts());
+    }
 }

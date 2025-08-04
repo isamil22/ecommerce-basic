@@ -20,6 +20,7 @@ public interface ProductMapper {
     @Mapping(source = "variantTypes", target = "variantTypes")
     @Mapping(source = "variants", target = "variants")
     @Mapping(source = "hasVariants", target = "hasVariants")
+    @Mapping(source = "isPackable", target = "isPackable")
     ProductDTO toDTO(Product product);
 
     @Mapping(target = "category", ignore = true)
@@ -27,6 +28,7 @@ public interface ProductMapper {
     @Mapping(target = "variants", ignore = true)
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "isPackable", source = "isPackable")
     Product toEntity(ProductDTO productDTO);
 
     @Mapping(target = "id", ignore = true)

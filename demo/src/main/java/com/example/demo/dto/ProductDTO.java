@@ -38,6 +38,9 @@ public class ProductDTO {
     // Add the hasVariants field
     private Boolean hasVariants = false;
 
+    private Boolean isPackable = false; // Add this line
+
+
     @NotNull(message = "Category ID is required for a product")
     private Long categoryId;
 
