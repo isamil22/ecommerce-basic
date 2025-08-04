@@ -20,7 +20,7 @@ public interface ProductMapper {
     @Mapping(source = "variantTypes", target = "variantTypes")
     @Mapping(source = "variants", target = "variants")
     @Mapping(source = "hasVariants", target = "hasVariants")
-    @Mapping(source = "isPackable", target = "isPackable")
+    @Mapping(source = "packable", target = "isPackable")
     ProductDTO toDTO(Product product);
 
     @Mapping(target = "category", ignore = true)
@@ -28,7 +28,7 @@ public interface ProductMapper {
     @Mapping(target = "variants", ignore = true)
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "isPackable", source = "isPackable")
+    @Mapping(target = "packable", source = "isPackable")
     Product toEntity(ProductDTO productDTO);
 
     @Mapping(target = "id", ignore = true)
@@ -39,7 +39,6 @@ public interface ProductMapper {
     @Mapping(target = "variants", ignore = true)
     void updateProductFromDto(ProductDTO dto, @MappingTarget Product entity);
 
-    // ✅ Existing VariantType mapping (working correctly)
     default List<VariantTypeDto> mapVariantTypes(List<VariantType> variantTypes) {
         if (variantTypes == null) {
             return null;
@@ -61,7 +60,6 @@ public interface ProductMapper {
         return variantTypeDto;
     }
 
-    // 🔧 ProductVariant mapping methods
     default List<ProductVariantDto> mapProductVariants(List<ProductVariant> productVariants) {
         if (productVariants == null) {
             return null;

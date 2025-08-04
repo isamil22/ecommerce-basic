@@ -35,11 +35,9 @@ public class ProductDTO {
     private boolean bestseller;
     private boolean newArrival;
 
-    // Add the hasVariants field
     private Boolean hasVariants = false;
 
-    private Boolean isPackable = false; // Add this line
-
+    private Boolean isPackable = false;
 
     @NotNull(message = "Category ID is required for a product")
     private Long categoryId;
@@ -47,11 +45,9 @@ public class ProductDTO {
     private String categoryName;
     private Product.ProductType type;
 
-    // These fields will now correctly reference the public DTO classes
     private List<VariantTypeDto> variantTypes;
     private List<ProductVariantDto> variants;
 
-    // Getter and setter for hasVariants (explicitly defined for clarity)
     public Boolean getHasVariants() {
         return hasVariants;
     }
