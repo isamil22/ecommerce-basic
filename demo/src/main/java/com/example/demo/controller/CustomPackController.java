@@ -26,4 +26,16 @@ public class CustomPackController {
     public ResponseEntity<List<CustomPackDTO>> getAllCustomPacks() {
         return ResponseEntity.ok(customPackService.getAllCustomPacks());
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CustomPackDTO> getCustomPackById(@PathVariable Long id) {
+        return ResponseEntity.ok(customPackService.getCustomPackById(id));
+    }
+
+    // --- ADD THIS ENDPOINT ---
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CustomPackDTO> updateCustomPack(@PathVariable Long id, @RequestBody CustomPackDTO customPackDTO) {
+        return ResponseEntity.ok(customPackService.updateCustomPack(id, customPackDTO));
+    }
 }

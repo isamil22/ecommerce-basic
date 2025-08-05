@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createCustomPack } from '../../api/apiService'; // Assuming you will create a getCustomPackById and updateCustomPack later
+import { createCustomPack, getCustomPackById, updateCustomPack } from '../../api/apiService'; // Import new functions
 import { toast } from 'react-toastify';
+import Loader from '../../components/Loader'; // Import Loader
 
 const AdminCustomPackForm = () => {
     const { id } = useParams();
@@ -15,13 +16,24 @@ const AdminCustomPackForm = () => {
         fixedPrice: '',
         discountRate: ''
     });
-
+    const [loading, setLoading] = useState(false); // Add loading state
     const isEditing = Boolean(id);
 
-    // This effect would fetch pack data if you were editing
     useEffect(() => {
         if (isEditing) {
-            // TODO: Implement getCustomPackById(id) to fetch data for editing
+            setLoading(true);
+            const fetchPackData = async () => {
+                try {
+                    const response = await getCustomPackById(id);
+                    setFormData(response.data); // Populate form with fetched data
+                } catch (error) {
+                    toast.error('Failed to fetch custom pack data.');
+                    console.error(error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchPackData();
         }
     }, [id, isEditing]);
 
@@ -34,23 +46,28 @@ const AdminCustomPackForm = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                // TODO: Implement updateCustomPack(id, formData)
+                await updateCustomPack(id, formData); // Use update function
                 toast.success('Custom pack updated successfully!');
             } else {
                 await createCustomPack(formData);
                 toast.success('Custom pack created successfully!');
             }
-            navigate('/admin/custom-packs'); // Navigate to a list page you will create
+            navigate('/admin/custom-packs');
         } catch (error) {
             toast.error('Failed to save custom pack.');
             console.error(error);
         }
     };
 
+    if (loading) {
+        return <Loader />;
+    }
+
     return (
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">{isEditing ? 'Edit Custom Pack' : 'Create Custom Pack'}</h1>
             <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+                {/* Your form fields remain the same */}
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Pack Name</label>
                     <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />

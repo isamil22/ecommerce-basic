@@ -305,6 +305,14 @@ export const getAllCustomPacks = () => {
     return apiService.get('/custom-packs');
 };
 
+export const getCustomPackById = (id) => {
+    return apiService.get(`/custom-packs/${id}`);
+};
+
+export const updateCustomPack = (id, customPackData) => {
+    return apiService.put(`/custom-packs/${id}`, customPackData);
+};
+
 export const deleteCustomPack = (id) => {
     return apiService.delete(`/custom-packs/${id}`);
 };
