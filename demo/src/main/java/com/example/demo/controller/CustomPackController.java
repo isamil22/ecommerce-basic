@@ -32,10 +32,17 @@ public class CustomPackController {
         return ResponseEntity.ok(customPackService.getCustomPackById(id));
     }
 
-    // --- ADD THIS ENDPOINT ---
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CustomPackDTO> updateCustomPack(@PathVariable Long id, @RequestBody CustomPackDTO customPackDTO) {
         return ResponseEntity.ok(customPackService.updateCustomPack(id, customPackDTO));
+    }
+
+    // --- ADD THIS ENDPOINT ---
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteCustomPack(@PathVariable Long id) {
+        customPackService.deleteCustomPack(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -7,7 +7,7 @@ import com.example.demo.model.CustomPack;
 import com.example.demo.repositories.CustomPackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Import this
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +37,6 @@ public class CustomPackService {
         return customPackMapper.toDTO(customPack);
     }
 
-    // --- ADD THIS METHOD ---
     @Transactional
     public CustomPackDTO updateCustomPack(Long id, CustomPackDTO customPackDTO) {
         CustomPack existingPack = customPackRepository.findById(id)
@@ -54,5 +53,13 @@ public class CustomPackService {
 
         CustomPack updatedPack = customPackRepository.save(existingPack);
         return customPackMapper.toDTO(updatedPack);
+    }
+
+    // --- ADD THIS METHOD ---
+    public void deleteCustomPack(Long id) {
+        if (!customPackRepository.existsById(id)) {
+            throw new ResourceNotFoundException("CustomPack not found with id: " + id);
+        }
+        customPackRepository.deleteById(id);
     }
 }

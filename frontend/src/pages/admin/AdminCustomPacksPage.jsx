@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllCustomPacks, deleteCustomPack } from '../../api/apiService'; // Using custom pack functions
+import { getAllCustomPacks, deleteCustomPack } from '../../api/apiService';
 import Loader from '../../components/Loader';
 import { toast } from 'react-toastify';
 
@@ -28,8 +28,9 @@ const AdminCustomPacksPage = () => {
     const handleDelete = async (packId) => {
         if (window.confirm('Are you sure you want to delete this custom pack?')) {
             try {
-                // You will need to create deleteCustomPack in your apiService
-                // await deleteCustomPack(packId);
+                // This line is now active
+                await deleteCustomPack(packId);
+
                 toast.success('Custom pack deleted successfully!');
                 fetchCustomPacks(); // Refresh the list
             } catch (err) {
