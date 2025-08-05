@@ -42,7 +42,8 @@ import AnalyticsTracker from './components/AnalyticsTracker.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
 import AdminCountdownPage from './pages/admin/AdminCountdownPage.jsx';
-import AdminCustomPackForm from './pages/admin/AdminCustomPackForm'; // Import the new form
+import AdminCustomPackForm from './pages/admin/AdminCustomPackForm';
+import AdminCustomPacksPage from './pages/admin/AdminCustomPacksPage'; // <-- Add this import
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -159,6 +160,7 @@ function App() {
                             <Route path="packs" element={<AdminPacksPage />} />
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
+                            {/* Corrected the route below to use the correct component */}
                             <Route path="custom-packs" element={<AdminCustomPacksPage />} />
                             <Route path="custom-packs/new" element={<AdminCustomPackForm />} />
                             <Route path="custom-packs/edit/:id" element={<AdminCustomPackForm />} />
