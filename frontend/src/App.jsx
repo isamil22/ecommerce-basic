@@ -42,6 +42,7 @@ import AnalyticsTracker from './components/AnalyticsTracker.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
 import AdminCountdownPage from './pages/admin/AdminCountdownPage.jsx';
+import AdminCustomPackForm from './pages/admin/AdminCustomPackForm'; // Import the new form
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -158,6 +159,9 @@ function App() {
                             <Route path="packs" element={<AdminPacksPage />} />
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
+                            <Route path="custom-packs" element={<AdminCustomPacksPage />} />
+                            <Route path="custom-packs/new" element={<AdminCustomPackForm />} />
+                            <Route path="custom-packs/edit/:id" element={<AdminCustomPackForm />} />
                             <Route path="coupons" element={<AdminCouponsPage />} />
                             <Route path="announcement" element={<AdminAnnouncementPage />} />
                             <Route path="countdown" element={<AdminCountdownPage />} />

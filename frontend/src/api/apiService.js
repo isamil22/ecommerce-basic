@@ -297,6 +297,10 @@ export const getCountdown = () => {
     return apiService.get('/countdown');
 };
 
+export const createCustomPack = (customPackData) => {
+    return apiService.post('/custom-packs', customPackData);
+};
+
 export const saveCountdown = (countdownData) => {
     return apiService.post('/countdown', countdownData);
 };
