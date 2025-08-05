@@ -301,6 +301,14 @@ export const createCustomPack = (customPackData) => {
     return apiService.post('/custom-packs', customPackData);
 };
 
+export const getAllCustomPacks = () => {
+    return apiService.get('/custom-packs');
+};
+
+export const deleteCustomPack = (id) => {
+    return apiService.delete(`/custom-packs/${id}`);
+};
+
 export const saveCountdown = (countdownData) => {
     return apiService.post('/countdown', countdownData);
 };
