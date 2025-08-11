@@ -1,3 +1,4 @@
+// frontend/src/api/apiService.js
 import axios from 'axios';
 
 const apiService = axios.create({
@@ -315,6 +316,10 @@ export const updateCustomPack = (id, customPackData) => {
 
 export const deleteCustomPack = (id) => {
     return apiService.delete(`/custom-packs/${id}`);
+};
+
+export const getPackableProducts = () => {
+    return apiService.get('/products/packable');
 };
 
 export const saveCountdown = (countdownData) => {

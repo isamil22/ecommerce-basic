@@ -42,7 +42,9 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated, userRole, cartCount }) =>
                     <div className="hidden md:flex md:items-center md:space-x-4">
                         <Link to="/" className="text-gray-500 hover:text-pink-500 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Home</Link>
                         <Link to="/products" className="text-gray-500 hover:text-pink-500 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Products</Link>
-                        <Link to="/packs" className="text-gray-500 hover:text-pink-500 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Packs</Link> {/* ADD THIS LINE */}
+                        <Link to="/packs" className="text-gray-500 hover:text-pink-500 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Packs</Link>
+                        {/* --- NEW LINK ADDED HERE --- */}
+                        <Link to="/custom-packs" className="text-gray-500 hover:text-pink-500 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Custom Packs</Link>
                         {userRole === 'ADMIN' && (
                             <Link to="/admin/dashboard" className="font-bold text-pink-500 hover:text-pink-600 px-3 py-2 rounded-md text-sm">
                                 Admin
@@ -82,7 +84,9 @@ const Navbar = ({ isAuthenticated, setIsAuthenticated, userRole, cartCount }) =>
                 <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                     <Link to="/" className="text-gray-500 hover:bg-pink-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</Link>
                     <Link to="/products" className="text-gray-500 hover:bg-pink-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Products</Link>
-                    <Link to="/packs" className="text-gray-500 hover:bg-pink-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Packs</Link> {/* ADD THIS LINE */}
+                    <Link to="/packs" className="text-gray-500 hover:bg-pink-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Packs</Link>
+                    {/* --- NEW LINK ADDED HERE FOR MOBILE --- */}
+                    <Link to="/custom-packs" className="text-gray-500 hover:bg-pink-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Custom Packs</Link>
                     {userRole === 'ADMIN' && (
                         <Link to="/admin/dashboard" className="text-gray-500 hover:bg-pink-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Admin</Link>
                     )}

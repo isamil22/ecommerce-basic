@@ -1,3 +1,5 @@
+// frontend/src/App.jsx
+
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
@@ -43,7 +45,9 @@ import AnnouncementBar from './components/AnnouncementBar.jsx';
 import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
 import AdminCountdownPage from './pages/admin/AdminCountdownPage.jsx';
 import AdminCustomPackForm from './pages/admin/AdminCustomPackForm';
-import AdminCustomPacksPage from './pages/admin/AdminCustomPacksPage'; // <-- Add this import
+import AdminCustomPacksPage from './pages/admin/AdminCustomPacksPage';
+import CustomPacksPage from './pages/CustomPacksPage'; // <-- New import
+import CustomPackCreationPage from './pages/CustomPackCreationPage'; // <-- New import
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -129,6 +133,10 @@ function App() {
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/packs" element={<PacksPage />} />
                         <Route path="/packs/:id" element={<PackDetailPage />} />
+                        {/* --- NEW ROUTES START --- */}
+                        <Route path="/custom-packs" element={<CustomPacksPage />} />
+                        <Route path="/custom-packs/:id" element={<CustomPackCreationPage />} />
+                        {/* --- NEW ROUTES END --- */}
                         <Route path="/products/:id" element={<ProductDetailPage fetchCartCount={fetchCartCount} isAuthenticated={isAuthenticated} />} />
                         <Route path="/hello" element={<HelloPage />} />
                         <Route path="/auth" element={<AuthPage setIsAuthenticated={handleSetIsAuthenticated} />} />
@@ -160,7 +168,6 @@ function App() {
                             <Route path="packs" element={<AdminPacksPage />} />
                             <Route path="packs/new" element={<AdminPackForm />} />
                             <Route path="packs/edit/:id" element={<AdminPackEditPage />} />
-                            {/* Corrected the route below to use the correct component */}
                             <Route path="custom-packs" element={<AdminCustomPacksPage />} />
                             <Route path="custom-packs/new" element={<AdminCustomPackForm />} />
                             <Route path="custom-packs/edit/:id" element={<AdminCustomPackForm />} />
